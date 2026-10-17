@@ -7,29 +7,29 @@
       "id": "CCDV-001",
       "domain": "Applications and Integration",
       "type": "single",
-      "question": "A team moves a working script that calls claude -p into a Python service built on the Claude Agent SDK, leaving systemPrompt unset. The agent now skips the tool-usage habits and safety behavior the CLI showed. What should the developer do?",
+      "question": "A team moves a coding assistant that worked well through claude -p into a Python service built on the Claude Agent SDK, where engineers still watch and steer its repository work. With no system prompt configured, the agent has lost the tool-usage habits and safety behavior the CLI showed. What should the developer do?",
       "options": [
         {
           "key": "A",
-          "text": "Set setting_sources to [\"project\"] so the SDK loads the Claude Code system prompt from the repository"
+          "text": "Write a short custom system prompt describing the agent's role, since a custom string keeps the CLI's guidance underneath"
         },
         {
           "key": "B",
-          "text": "Pass the CLI flag --append-system-prompt through extra_args so the SDK keeps the CLI defaults"
+          "text": "Load the project setting sources so the SDK picks up the Claude Code system prompt from the repository"
         },
         {
           "key": "C",
-          "text": "Set system_prompt to the preset form with preset \"claude_code\", adding append for any custom rules"
+          "text": "Start from the Claude Code preset system prompt and append the team's own rules on top of it"
         },
         {
           "key": "D",
-          "text": "Set exclude_dynamic_sections to True so the SDK stops trimming the default system prompt"
+          "text": "Move the safety and tool-usage rules into CLAUDE.md, since CLAUDE.md replaces the minimal default prompt"
         }
       ],
       "correct": [
         "C"
       ],
-      "explanation": "When systemPrompt is unset, the Agent SDK uses a minimal prompt that covers tool calling but omits the claude_code preset's content, including its security and safety instructions, whereas claude -p uses the Claude Code system prompt by default. Selecting the claude_code preset (optionally with append) restores CLI-matching behavior. Setting sources control CLAUDE.md, settings, and skills, not which system prompt is used. Appending text does not add the preset's content, and exclude_dynamic_sections only moves per-user context out of the system prompt for caching.",
+      "explanation": "With no system prompt set, the Agent SDK uses a minimal prompt that covers tool calling but omits the Claude Code preset's content, including its security and safety instructions, while claude -p uses the Claude Code prompt by default. For a coding tool that a human watches and steers, the docs recommend the claude_code preset, with append for product-specific rules, as the lowest-risk customization. A custom string replaces the default entirely, so the team would have to rewrite the lost guidance itself. Setting sources and CLAUDE.md add project context to the conversation but do not change which system prompt is used.",
       "reference": "https://code.claude.com/docs/en/agent-sdk/modifying-system-prompts"
     },
     {
@@ -123,63 +123,63 @@
       "id": "CCDV-005",
       "domain": "Applications and Integration",
       "type": "single",
-      "question": "A developer ports a working raw-HTTP Messages API integration to Claude on Google Cloud's Vertex AI (Agent Platform) and calls the rawPredict endpoint. What change to the request format is required?",
+      "question": "A team has a working Python integration built on the Anthropic SDK and must move inference to Google Cloud's Agent Platform (Vertex AI) so usage runs under Google Cloud billing and IAM. They want to change as little application code as possible and not hand-maintain the platform's request-format differences. What should they do?",
       "options": [
         {
           "key": "A",
-          "text": "Keep the model in the body and replace the x-api-key header with an anthropic-version header set to the Vertex value"
+          "text": "Keep the existing client and Anthropic API key, and point the client's base URL at the Google Cloud endpoint"
         },
         {
           "key": "B",
-          "text": "Move the model into the endpoint URL and pass anthropic_version in the request body set to vertex-2023-10-16"
+          "text": "Rewrite the calls as raw rawPredict HTTP requests so the platform-specific request body is under the team's control"
         },
         {
           "key": "C",
-          "text": "Keep the request body unchanged and add an anthropic-beta header naming the Vertex platform"
+          "text": "Keep calling the Claude API directly and export usage logs to Google Cloud for billing reconciliation each month"
         },
         {
           "key": "D",
-          "text": "Move max_tokens into the endpoint URL and send messages as a Vertex-specific contents array"
+          "text": "Switch to the SDK's Vertex client with Google Cloud credentials and keep the same messages calls"
         }
       ],
       "correct": [
-        "B"
+        "D"
       ],
-      "explanation": "On Vertex AI the model is specified in the Google Cloud endpoint URL rather than the body, and anthropic_version is passed in the body (not as a header) with the value vertex-2023-10-16. The messages array and max_tokens keep the normal Messages API shape. No platform beta header is used, and authentication uses Google Cloud credentials rather than an Anthropic version header swap.",
+      "explanation": "On Agent Platform the request format differs from the Claude API: the model goes in the endpoint URL and anthropic_version is sent in the body with a Vertex-specific value. Anthropic's SDKs support the platform (for example AnthropicVertex with a project and region using Google credentials), so the same messages.create calls work and the SDK handles those differences. An Anthropic API key and a changed base URL do not authenticate to Google Cloud or produce the required request shape. Raw rawPredict calls work but leave the team maintaining the format differences by hand, and calling the Claude API directly does not move inference or billing to Google Cloud.",
       "reference": "https://platform.claude.com/docs/en/build-with-claude/claude-on-vertex-ai"
     },
     {
       "id": "CCDV-006",
       "domain": "Applications and Integration",
       "type": "multi",
-      "question": "A developer is building an agent with the Claude Agent SDK's query() function and wants to understand how the repository's CLAUDE.md reaches Claude. Which TWO statements are correct? (Choose TWO.)",
+      "question": "A team runs a Claude Agent SDK agent on shared CI build machines. It must follow the conventions in the repository's CLAUDE.md, but it must not pick up personal instructions or memory stored in the build account's home directory. Which TWO actions meet these requirements? (Choose TWO.)",
       "options": [
         {
           "key": "A",
-          "text": "If settingSources is omitted, query() loads user, project, and local settings, including CLAUDE.md files"
+          "text": "Leave the setting sources option unset, because by default the SDK loads only the repository's project settings"
         },
         {
           "key": "B",
-          "text": "CLAUDE.md is loaded only when systemPrompt uses the claude_code preset; a custom prompt string skips it"
+          "text": "Set setting sources to project only, which loads the repository CLAUDE.md and leaves out user and local settings"
         },
         {
           "key": "C",
-          "text": "The SDK merges CLAUDE.md into the system prompt text, so editing it changes the system prompt itself"
+          "text": "Pass an empty setting sources list, which keeps the repository CLAUDE.md but drops everything from the home directory"
         },
         {
           "key": "D",
-          "text": "Passing an empty settingSources array means CLAUDE.md is not loaded, whatever system prompt is chosen"
+          "text": "Select the Claude Code preset system prompt, because CLAUDE.md is only loaded when that preset is in use"
         },
         {
           "key": "E",
-          "text": "CLAUDE.md loads only in interactive Claude Code sessions; SDK agents must copy it into the user prompt"
+          "text": "Disable auto memory through the agent's environment, since setting sources do not control it"
         }
       ],
       "correct": [
-        "A",
-        "D"
+        "B",
+        "E"
       ],
-      "explanation": "Omitting settingSources is equivalent to [\"user\", \"project\", \"local\"], so CLAUDE.md loads automatically, and an empty array turns those sources off so CLAUDE.md is not loaded. The docs state that CLAUDE.md loading is controlled by setting sources, not by the claude_code preset, so a custom system prompt does not skip it. The SDK injects CLAUDE.md into the conversation as project context and leaves the system prompt untouched. SDK agents do read CLAUDE.md, which is the point of sharing it between interactive sessions and SDK agents.",
+      "explanation": "Setting sources to project only loads the repository's CLAUDE.md, rules, and settings while excluding the user source (~/.claude/CLAUDE.md and user settings) and local files. Auto memory under ~/.claude/projects/ is read regardless of setting sources, so it must be turned off separately, for example with CLAUDE_CODE_DISABLE_AUTO_MEMORY=1 in env. Omitting the option is equivalent to user, project, and local, so personal settings would load. An empty list disables the project source too, so the repository CLAUDE.md would not load, and CLAUDE.md loading is controlled by setting sources, not by the claude_code preset.",
       "reference": "https://code.claude.com/docs/en/agent-sdk/claude-code-features"
     },
     {
@@ -539,58 +539,58 @@
       "id": "CCDV-019",
       "domain": "Applications and Integration",
       "type": "single",
-      "question": "A developer designs a JSON schema for structured outputs in a loan app. It sets additionalProperties to false, lists required fields, uses an enum for loan_type, and adds minimum and maximum on credit_score and maxLength on notes. Requests fail with HTTP 400. What should the developer do?",
+      "question": "A loan app uses structured outputs so every response matches a JSON schema, and the business requires credit_score to be between 300 and 850 and notes to stay under 500 characters. Adding those bounds as schema keywords made every request fail with HTTP 400. How should the developer enforce the limits?",
       "options": [
         {
           "key": "A",
-          "text": "Replace the loan_type enum with a free-form string, because enums are not supported in structured outputs"
+          "text": "Keep the bounds only in the field descriptions and rely on structured outputs to enforce what the descriptions say"
         },
         {
           "key": "B",
-          "text": "Set additionalProperties to true on every object, because structured outputs require open object schemas"
+          "text": "Drop the bounds from the sent schema and check them in application code after the response is parsed"
         },
         {
           "key": "C",
-          "text": "Remove the required array and mark every field optional, because required lists cause the 400 error"
+          "text": "Turn off structured outputs and request JSON in the prompt, since prompt instructions can express any limit"
         },
         {
           "key": "D",
-          "text": "Drop minimum, maximum, and maxLength from the schema and enforce those limits in application code"
+          "text": "Move the bounds into the system prompt and lower the temperature so the model stays inside the ranges"
         }
       ],
       "correct": [
-        "D"
+        "B"
       ],
-      "explanation": "Structured outputs support enums of primitive values, required, and additionalProperties set to false, but numerical constraints such as minimum and maximum and string constraints such as minLength and maxLength are not supported and return a 400 error. The fix is to remove those keywords (SDK helpers can move them into field descriptions) and validate the ranges in code. Enums of strings are explicitly supported. additionalProperties must be false for objects, so setting it to true is itself unsupported. Required fields are supported and are what guarantee their presence.",
+      "explanation": "Structured outputs do not support numeric bounds such as minimum and maximum or string limits such as maxLength, and using them returns a 400 error. The SDK helpers handle this by removing unsupported constraints from the sent schema, noting them in the field description, and validating the response against the original schema (for example messages.parse with a Pydantic model), which amounts to enforcing the bounds in code. Descriptions are guidance to the model, not enforced constraints. Prompt-only JSON loses the schema guarantee, and prompt wording or sampling changes still cannot guarantee a value stays in range.",
       "reference": "https://platform.claude.com/docs/en/build-with-claude/structured-outputs"
     },
     {
       "id": "CCDV-020",
       "domain": "Applications and Integration",
       "type": "single",
-      "question": "A reporting service uses structured outputs with a schema whose properties are listed as notes, name, email, age, with only name and email required. A downstream parser reads fields by position and breaks because notes no longer comes first. Which fix matches the documented behavior?",
+      "question": "A reporting service uses structured outputs, and a downstream parser reads the returned fields by position. After an optional notes field was added at the top of the schema, the parser broke because notes now appears after the required fields. The team wants a fix that keeps working as the schema evolves. What should they do?",
       "options": [
         {
           "key": "A",
-          "text": "Add a propertyOrder keyword to the schema so the API keeps the declared order for all fields"
+          "text": "Change the parser to read fields by key, because output order depends on which fields are required"
         },
         {
           "key": "B",
-          "text": "Mark every property as required, or change the parser to read fields by key instead of position"
+          "text": "Move notes to the bottom of the schema and add a comment telling future editors to keep optional fields last"
         },
         {
           "key": "C",
-          "text": "Move notes to the end of the properties object, since the API always emits fields in reverse order"
+          "text": "Switch from structured outputs to requesting JSON in the prompt, which keeps fields in the order they are listed"
         },
         {
           "key": "D",
-          "text": "Enable strict tool use instead of JSON outputs, since tools preserve the declared property order"
+          "text": "Sort the returned keys alphabetically in a post-processing step before the parser reads them by position"
         }
       ],
       "correct": [
-        "B"
+        "A"
       ],
-      "explanation": "With structured outputs, properties keep their schema order with one caveat: required properties appear first, followed by optional properties, so notes moves after name and email. The documented options are to mark all properties as required or to account for the reordering in parsing logic, and reading by key is the robust choice. There is no propertyOrder keyword in the supported feature list. The API does not reverse field order, and switching to strict tool use is not a documented fix, since it shares the same JSON Schema limitations as JSON outputs.",
+      "explanation": "With structured outputs, required properties are emitted first and optional properties after them, each group in schema order, so adding an optional field can change positions. The docs say to mark all properties required or account for the reordering in parsing logic, and reading by key is the robust choice as the schema changes. Reordering the schema fixes today's case but breaks again the next time someone adds or makes a field optional. Dropping structured outputs gives up the schema guarantee, and alphabetical sorting still breaks positional parsing whenever a field is added.",
       "reference": "https://platform.claude.com/docs/en/build-with-claude/structured-outputs"
     },
     {
@@ -626,29 +626,29 @@
       "id": "CCDV-022",
       "domain": "Applications and Integration",
       "type": "single",
-      "question": "A developer works on two long-running Claude Code workstreams, an OAuth migration and a search rewrite, switching between them over several days in the same directory. They want to reopen the right conversation each time without scanning a list. What should they do?",
+      "question": "A developer runs two long-lived Claude Code workstreams in the same directory, an OAuth migration and a search rewrite, switching between them over several days. Each workstream needs its own context, and the developer wants to jump straight back into the right one without picking from a list. What should they do?",
       "options": [
         {
           "key": "A",
-          "text": "Run claude --continue each morning, which asks which of the two recent conversations to open"
+          "text": "Always continue the most recent conversation in the directory and restate which workstream is active"
         },
         {
           "key": "B",
-          "text": "Use claude --fork-session at the end of each day so each workstream is saved under a fixed ID"
+          "text": "Keep both workstreams in one session and compact the conversation whenever they switch between them"
         },
         {
           "key": "C",
-          "text": "Name each session with claude -n or /rename, then reopen it with claude --resume and that name"
+          "text": "Give each session a descriptive name and resume it by that name when switching workstreams"
         },
         {
           "key": "D",
-          "text": "Keep both workstreams in one session and run /compact whenever switching from one to the other"
+          "text": "Fork the current session each morning so that a fresh copy is created for whichever workstream is next"
         }
       ],
       "correct": [
         "C"
       ],
-      "explanation": "The --name (-n) flag sets a display name for a session, /rename changes it mid-session, and claude --resume accepts a session name, so each workstream can be reopened directly by name. Claude Code's best practices recommend naming sessions and treating them like branches so each workstream has its own persistent context. claude --continue loads only the most recent conversation in the directory without asking. --fork-session creates a new session ID when resuming and does not save under a fixed ID. Mixing two workstreams in one session pollutes context, and /compact does not separate them.",
+      "explanation": "Claude Code lets you set a display name for a session with --name (or change it with /rename) and resume a named session directly with claude --resume <name>, so each workstream keeps its own context and can be reopened without a picker. Continuing the most recent conversation picks whichever session was last used in the directory, which may be the wrong workstream. Mixing both tasks in one session pollutes context, and compaction only summarizes it. Forking creates a new session ID when resuming and does not give each workstream a stable, separate thread.",
       "reference": "https://code.claude.com/docs/en/cli-reference"
     },
     {
@@ -713,29 +713,29 @@
       "id": "CCDV-025",
       "domain": "Applications and Integration",
       "type": "single",
-      "question": "A developer is writing a raw SSE parser for streamed Messages API responses. They need the final stop_reason and the output token count for billing. Which event provides these values?",
+      "question": "A developer streams Messages API responses so text appears as it is generated, and also needs the final stop reason and output token count for billing. Their hand-written SSE parser reads usage from the first event of each stream and records far too few output tokens. What is the best fix?",
       "options": [
         {
           "key": "A",
-          "text": "message_start, which includes the final stop_reason and output token totals up front"
+          "text": "Use the SDK's stream helper and read stop reason and usage from its final accumulated message"
         },
         {
           "key": "B",
-          "text": "message_delta, which carries the stop_reason and cumulative usage token counts"
+          "text": "Call the token counting endpoint after each stream ends and bill on the count it returns for the response"
         },
         {
           "key": "C",
-          "text": "content_block_stop, which reports the stop_reason for the block that just finished"
+          "text": "Disable streaming for billing-relevant calls so the usage block is always complete in a single response"
         },
         {
           "key": "D",
-          "text": "ping, which periodically reports the running output token count during the stream"
+          "text": "Count the text deltas received during the stream and multiply by an average tokens-per-delta factor"
         }
       ],
       "correct": [
-        "B"
+        "A"
       ],
-      "explanation": "The stream begins with message_start (stop_reason null), then content blocks, then one or more message_delta events with top-level changes such as stop_reason; the usage counts in message_delta are cumulative. content_block_stop only marks the end of a block by index, and ping events carry no usage data.",
+      "explanation": "The first streaming event arrives before any output is generated, while the stop reason and cumulative usage counts come in the message_delta events near the end of the stream. The SDKs' streaming helpers accumulate every event into the complete Message (for example get_final_message in Python or finalMessage in TypeScript), so the app can render text live and still read accurate final values. The token counting endpoint returns only the input tokens of a request, not what a response generated. Turning off streaming breaks the live-text requirement, and estimating from delta counts is inaccurate.",
       "reference": "https://platform.claude.com/docs/en/build-with-claude/streaming"
     },
     {
@@ -800,34 +800,34 @@
       "id": "CCDV-028",
       "domain": "Applications and Integration",
       "type": "multi",
-      "question": "A developer installs several Claude Code plugins at user scope but uses most of them only occasionally, and notices less free context in sessions where none of them run. Which TWO statements about enabled plugins are correct? (Choose TWO.)",
+      "question": "A developer has several Claude Code plugins installed at user scope but uses most of them only in occasional sessions, and every session now starts with less free context. They want to reclaim that context without losing the ability to turn the plugins back on quickly. Which TWO actions best meet this goal? (Choose TWO.)",
       "options": [
         {
           "key": "A",
-          "text": "A plugin's full skill and agent files are loaded at session start, which is why context is reduced"
+          "text": "Disable the occasional plugins with /plugin or claude plugin disable, which leaves them installed"
         },
         {
           "key": "B",
-          "text": "Names and descriptions of a plugin's model-invocable skills and agents are in context on every turn"
+          "text": "Uninstall the occasional plugins and reinstall each one from its marketplace whenever it is needed again"
         },
         {
           "key": "C",
-          "text": "A plugin's hooks and MCP servers stay inactive until one of that plugin's skills is invoked"
+          "text": "Leave them enabled, because a plugin adds nothing to context until one of its skills is actually invoked"
         },
         {
           "key": "D",
-          "text": "A plugin installed at user scope in the terminal is not available in the desktop app's local sessions"
+          "text": "Use the plugin manager's list of plugins not used recently to decide which ones to turn off"
         },
         {
           "key": "E",
-          "text": "Running claude plugin disable, or using /plugin, turns a plugin off without uninstalling it"
+          "text": "Run occasional work in the desktop app instead, since it does not load plugins installed from the terminal"
         }
       ],
       "correct": [
-        "B",
-        "E"
+        "A",
+        "D"
       ],
-      "explanation": "An enabled plugin is part of every session: for each skill, agent, and command Claude can invoke on its own, the name and description are in context on every turn, which uses context even when nothing from the plugin runs. To stop a plugin without uninstalling it, disable it with /plugin or claude plugin disable. Only names and descriptions load up front; the full text of a skill or agent loads when it is used. A plugin's MCP servers run alongside each session where it is enabled and its hooks fire at their events regardless of skill use. The terminal, the desktop app's local sessions, and the VS Code extension share the same settings files, so a user-scope plugin is available in all three.",
+      "explanation": "An enabled plugin is part of every session: the name and description of each skill, agent, and command Claude can invoke are in context on every turn, even when nothing from the plugin runs. Disabling a plugin with /plugin or claude plugin disable stops that cost without uninstalling it, and the Installed tab's Not used recently group shows which plugins are candidates to turn off. Uninstalling also frees context but fails the requirement to turn plugins back on quickly. Plugins are not free until invoked, and the terminal and the desktop app's local sessions read the same settings files, so switching surfaces does not help.",
       "reference": "https://code.claude.com/docs/en/plugins"
     },
     {
@@ -892,63 +892,63 @@
       "id": "CCDV-031",
       "domain": "Applications and Integration",
       "type": "multi",
-      "question": "A developer is designing a pipeline around the Message Batches API. Which TWO statements should shape the design? (Choose TWO.)",
+      "question": "A team is building a weekly re-scoring pipeline that submits thousands of classification requests through the Message Batches API and writes each result back to the matching database row. Which TWO design choices matter most for correctness? (Choose TWO.)",
       "options": [
         {
           "key": "A",
-          "text": "Results may be returned in any order, so each request needs a unique custom_id for matching"
+          "text": "Match each result to its row by position, since results come back in the order the requests were submitted"
         },
         {
           "key": "B",
-          "text": "Each request's params are fully validated synchronously when the batch is created"
+          "text": "Set stream to true on each batched request so rows can be updated as soon as each answer is generated"
         },
         {
           "key": "C",
-          "text": "Requests that error or expire are billed at the discounted batch rate like successes"
+          "text": "Give every request a unique custom_id derived from the row key, and match results using that ID"
         },
         {
           "key": "D",
-          "text": "Individual batch requests cannot set stream to true; results come back as a file"
+          "text": "Count on batch creation to reject any malformed request immediately, so the pipeline fails fast"
         },
         {
           "key": "E",
-          "text": "Results remain downloadable indefinitely until the batch is explicitly deleted"
+          "text": "Send one sample request through the regular Messages API first to confirm the request shape is valid"
         }
       ],
       "correct": [
-        "A",
-        "D"
+        "C",
+        "E"
       ],
-      "explanation": "Batch results can be returned in any order, so custom_id must be used to match results to requests, and stream: true is not supported inside batch requests because results come back as a single file. Params are validated asynchronously, with errors reported after processing ends. Errored, canceled, and expired requests are not billed, and results are available only for a limited period (29 days) after creation.",
+      "explanation": "Batch results can be returned in any order, so each request needs a unique custom_id that the pipeline uses to match results to rows. Params are validated asynchronously and validation errors come back only when the whole batch has ended, so the docs recommend checking the request shape with the Messages API first. Matching by position fails because order is not guaranteed. Streaming is not supported inside batch requests, since results come back as a file, and batch creation does not fail fast on malformed params.",
       "reference": "https://platform.claude.com/docs/en/build-with-claude/batch-processing"
     },
     {
       "id": "CCDV-032",
       "domain": "Applications and Integration",
       "type": "single",
-      "question": "A developer replaces the official SDK with hand-written HTTP calls to the Messages API, sending x-api-key and content-type headers with a valid JSON body. Requests are now rejected. Which missing piece is most likely the cause?",
+      "question": "A team must call the Messages API over raw HTTP from a language that has no official SDK. They want the integration to keep working as Anthropic evolves the API, and to adopt changes only when they choose. What should they do?",
       "options": [
         {
           "key": "A",
-          "text": "An anthropic-beta header, which every Messages API request must include"
+          "text": "Send an explicit API version header and ignore unknown response fields and new enum values"
         },
         {
           "key": "B",
-          "text": "A request-id header, which the client must generate for each request"
+          "text": "Omit the version header so the API always serves its newest behavior and the client never falls behind"
         },
         {
           "key": "C",
-          "text": "The anthropic-version header, such as anthropic-version: 2023-06-01"
+          "text": "Send the newest beta headers on every request so the client receives new features before they are stable"
         },
         {
           "key": "D",
-          "text": "An Authorization: Bearer header in place of the x-api-key header"
+          "text": "Validate responses against a strict schema that rejects any field or value the client was not written for"
         }
       ],
       "correct": [
-        "C"
+        "A"
       ],
-      "explanation": "API requests must send an anthropic-version header (for example 2023-06-01); the client SDKs set it automatically, which is why the bug appeared only after dropping the SDK. Beta headers are needed only for beta features. request-id is a response header the API returns, and x-api-key is the correct authentication header for the direct API.",
+      "explanation": "Every request must send an anthropic-version header (the SDKs set it automatically), and within a version Anthropic preserves existing input and output parameters. Anthropic may still add optional inputs, add values to the output, and add new variants to enum-like values such as streaming event types, so a raw client should tolerate unknown fields and values. Omitting the header is not an option, because the header is required. Beta headers opt into pre-release features rather than stability, and a strict validator would break on the additive changes that a version allows.",
       "reference": "https://platform.claude.com/docs/en/api/versioning"
     },
     {
@@ -984,29 +984,29 @@
       "id": "CCDV-034",
       "domain": "Applications and Integration",
       "type": "single",
-      "question": "A platform team publishes a deploy-kit Claude Code plugin that calls an MCP tool from a secrets-vault plugin in the same git-backed marketplace. A secrets-vault 2.2 release renamed that tool and broke deploy-kit for users who updated. How should the team prevent this while still receiving 2.1.x patches?",
+      "question": "A platform team's deploy-kit plugin calls an MCP tool provided by a secrets-vault plugin in the same git-backed marketplace, and a secrets-vault 2.2 release renamed that tool and broke deploy-kit for users who updated. The team wants users to keep getting 2.1.x fixes and move to 2.2 only after the team has tested it. What should they do?",
       "options": [
         {
           "key": "A",
-          "text": "Set the version field in deploy-kit's plugin.json to 2.1.0, which pins every plugin it relies on to that release line"
+          "text": "Declare secrets-vault as a dependency with a ~2.1.0 range, and make sure its releases are tagged"
         },
         {
           "key": "B",
-          "text": "List secrets-vault under enabledPlugins in the repo's .claude/settings.json so users stay on the version installed there"
+          "text": "Copy secrets-vault's MCP server into deploy-kit so that deploy-kit no longer relies on the separate plugin"
         },
         {
           "key": "C",
-          "text": "Add secrets-vault with a ~2.1.0 range to the dependencies field of a package.json at the root of the deploy-kit plugin"
+          "text": "Pin deploy-kit's own version number to 2.1.0 so that the plugins it relies on stay on the same release line"
         },
         {
           "key": "D",
-          "text": "Declare secrets-vault in deploy-kit's plugin.json dependencies with \"version\": \"~2.1.0\", and tag secrets-vault releases"
+          "text": "Ask every user to turn off marketplace auto-update and update secrets-vault by hand after each test round"
         }
       ],
       "correct": [
-        "D"
+        "A"
       ],
-      "explanation": "A plugin's .claude-plugin/plugin.json can list other plugins in a dependencies array, and an object entry with name and a semantic-version range such as ~2.1.0 keeps users on 2.1.x patches instead of moving to 2.2. For git-backed sources the range resolves against release tags named like secrets-vault--v2.1.0, so the dependency's maintainer must tag releases. The top-level version field in plugin.json pins deploy-kit itself, not the plugins it depends on. enabledPlugins only turns plugins on or off, and package.json covers npm packages the plugin's own code needs, not other Claude Code plugins.",
+      "explanation": "A plugin can list other plugins as dependencies in its plugin.json with a semantic-version range, and a constraint such as ~2.1.0 keeps users on 2.1.x patches without moving to 2.2; the team widens the range after testing a newer release. For git-backed sources the range resolves against release tags, so the dependency's releases must be tagged. Vendoring the MCP server cuts users off from secrets-vault's 2.1.x fixes. deploy-kit's own version field does not constrain its dependencies, and relying on every user to change update settings is not enforceable.",
       "reference": "https://code.claude.com/docs/en/plugins/dependencies"
     },
     {
@@ -1627,34 +1627,34 @@
       "id": "CCDV-056",
       "domain": "Applications and Integration",
       "type": "multi",
-      "question": "A developer wants to try two beta features together in production requests made with raw HTTP. Which TWO statements about beta headers are accurate? (Choose TWO.)",
+      "question": "A team wants to ship a beta API feature in a production service that also has a working GA code path. They want to limit the impact if the beta later changes and avoid surprises in cost or capacity. Which TWO practices best meet these goals? (Choose TWO.)",
       "options": [
         {
           "key": "A",
-          "text": "Both beta names can go in a single anthropic-beta header as a comma-separated list."
+          "text": "Size capacity and budget from the GA feature's limits and prices, since a beta inherits both."
         },
         {
           "key": "B",
-          "text": "Beta features keep the same rate limits, pricing, and regional availability as GA features."
+          "text": "Turn the beta on only where needed, behind a switch that falls back to the GA code path."
         },
         {
           "key": "C",
-          "text": "An unrecognized beta name in the header is silently ignored, and the request proceeds as normal."
+          "text": "Leave the beta name in the header after the beta ends, since unknown names are simply ignored."
         },
         {
           "key": "D",
-          "text": "Beta features may change, have breaking changes with notice, or be deprecated or removed later."
+          "text": "Put the beta name in the API version header so the feature stays pinned to that dated version."
         },
         {
           "key": "E",
-          "text": "Beta names go in the anthropic-version header, replacing the date-based version value there."
+          "text": "Follow release notes for the beta and retest before relying on changes, since betas can change."
         }
       ],
       "correct": [
-        "A",
-        "D"
+        "B",
+        "E"
       ],
-      "explanation": "Multiple betas can be listed comma-separated in one anthropic-beta header, and the Claude API also reads repeated headers. Beta features are experimental and may have breaking changes with notice, be deprecated or removed, have different rate limits or pricing, or not be available in all regions. An invalid beta name returns a 400 error. Betas use their own anthropic-beta header, separate from anthropic-version.",
+      "explanation": "Beta features are experimental: they may have breaking changes with notice, be deprecated or removed, have different rate limits or pricing, and not be available in all regions, so gating the beta behind a fallback and tracking release notes contain that risk. Planning from GA limits and prices is wrong because betas can differ on both. An invalid or unavailable beta name returns a 400 error, so a stale beta name breaks requests rather than being ignored. Betas are requested with their own anthropic-beta header, separate from anthropic-version.",
       "reference": "https://platform.claude.com/docs/en/api/beta-headers"
     },
     {
@@ -1806,30 +1806,30 @@
       "id": "CCDV-062",
       "domain": "Applications and Integration",
       "type": "single",
-      "question": "A company uses the Claude API directly. Compliance requires that all model inference for one product's workspace runs only on US-based infrastructure, even if a developer forgets to set a request parameter. What should the team configure?",
+      "question": "Compliance requires that all model inference for one product's Claude API workspace runs only on US infrastructure. Several teams and ad-hoc scripts that never pass through CI use keys in that workspace, and the control must hold even when someone forgets a request parameter. What should the team configure?",
       "options": [
         {
           "key": "A",
-          "text": "Rely on each developer to add inference_geo set to us on every request, and review the code changes for compliance."
+          "text": "Require every team to set the US inference region on each request and catch omissions in code review."
         },
         {
           "key": "B",
-          "text": "Route all of that workspace's traffic through the Message Batches API, which only processes requests in the US."
+          "text": "Add a CI lint rule that fails any build whose Claude API calls omit the US inference region parameter."
         },
         {
           "key": "C",
-          "text": "Set the workspace's allowed_inference_geos to us only and its default_inference_geo to us in the Console."
+          "text": "Rely on the workspace's data-storage region being US, since where data is stored sets where inference runs."
         },
         {
           "key": "D",
-          "text": "Set the workspace geo to us, which controls where inference runs for every request made in that workspace."
+          "text": "In the workspace settings, allow only the US inference region and make US the default for requests."
         }
       ],
       "correct": [
-        "C"
+        "D"
       ],
-      "explanation": "Workspace settings can restrict which inference geos a workspace may use (allowed_inference_geos) and set the fallback when a request omits inference_geo (default_inference_geo). Together they enforce US-only inference regardless of individual code paths. Relying on every developer to set the parameter leaves gaps. Batches don't imply US-only processing. Workspace geo controls data storage at rest and endpoint processing, not where model inference runs.",
-      "reference": "https://platform.claude.com/docs/en/build-with-claude/data-residency"
+      "explanation": "Workspace settings can restrict which inference geos the workspace may use (requests naming another geo get an error) and set the default used when a request omits the parameter, which enforces the policy across every key in the workspace. Per-request discipline with code review fails the stated case of someone forgetting the parameter. A CI lint rule never sees scripts that bypass CI. Workspace geo controls data storage at rest and endpoint processing such as code execution, not where model inference runs.",
+      "reference": "https://platform.claude.com/docs/en/manage-claude/data-residency"
     },
     {
       "id": "CCDV-063",
@@ -1864,34 +1864,34 @@
       "id": "CCDV-064",
       "domain": "Applications and Integration",
       "type": "multi",
-      "question": "An enterprise chooses Claude in Amazon Bedrock (the bedrock-mantle Messages API endpoint) so that workloads stay inside its AWS security boundary with IAM-based access. When planning the architecture, which TWO Claude API capabilities should the team expect to be unavailable on this platform? (Choose TWO.)",
+      "question": "An enterprise is moving a contract-review app to Claude in Amazon Bedrock so all data stays inside its AWS security boundary. Today the app uploads each contract once with the Files API and reuses it across several questions, and finance pulls daily spend from the Usage and Cost API, but neither is supported on this platform. Which TWO adjustments keep the app working inside the boundary? (Choose TWO.)",
       "options": [
         {
           "key": "A",
-          "text": "Prompt caching for repeated system prompts"
+          "text": "Send each contract inline as document content and use prompt caching for the repeated contract prefix."
         },
         {
           "key": "B",
-          "text": "Tool use with client-defined tools"
+          "text": "Upload contracts through the Claude API's Files API and pass the returned file IDs in Bedrock requests."
         },
         {
           "key": "C",
-          "text": "The Message Batches API endpoint"
+          "text": "Send contract questions to the Claude API directly and keep Bedrock only for the app's other requests."
         },
         {
           "key": "D",
-          "text": "Citations grounded in provided documents"
+          "text": "Track spend through the AWS account's native billing instead of the Usage and Cost API endpoints."
         },
         {
           "key": "E",
-          "text": "The Files API for uploaded file inputs"
+          "text": "Point finance's daily spend job at the Bedrock endpoint's Usage and Cost path with an Admin API key."
         }
       ],
       "correct": [
-        "C",
-        "E"
+        "A",
+        "D"
       ],
-      "explanation": "Claude in Amazon Bedrock lists the Message Batches endpoint and Files API inputs among unsupported features, so bulk jobs and file references need another design. Prompt caching, tool use, and citations are listed as supported. Feature availability differs by platform, which belongs in the platform-selection requirements.",
+      "explanation": "Claude in Amazon Bedrock supports the Messages API with prompt caching but not Files API inputs or the Usage and Cost endpoints, so contracts are sent inline with caching for the reused prefix, and spend comes from Bedrock's AWS-native billing. Uploading through the Claude API's Files API sends contracts outside the AWS boundary, and Files API inputs aren't supported on Bedrock anyway. Routing contract questions to the Claude API also breaks the boundary requirement. The Usage and Cost endpoints are listed as unsupported on this platform, so pointing a job at them won't work.",
       "reference": "https://platform.claude.com/docs/en/build-with-claude/claude-in-amazon-bedrock"
     },
     {
@@ -1961,29 +1961,29 @@
       "id": "CCDV-067",
       "domain": "Applications and Integration",
       "type": "single",
-      "question": "A finance team wants a daily automated report of Claude API spend broken down by workspace, so it can charge costs back to product teams. Which approach should the developer use?",
+      "question": "A finance team wants an automated daily report of Claude API spend per workspace so it can charge costs back to product teams. The figures must reconcile with Anthropic's billing, and finance does not want to collect keys from each product team. Which approach should the developer use?",
       "options": [
         {
           "key": "A",
-          "text": "Sum the anthropic-ratelimit-tokens-remaining header values from production responses and multiply them by list prices."
+          "text": "Have each team log token counts from its own responses, multiply them by list prices, and send in totals."
         },
         {
           "key": "B",
-          "text": "Call the Cost API (/v1/organizations/cost_report) with an Admin API credential, grouped by workspace_id."
+          "text": "Run one scheduled job using an admin credential against the cost report API, grouped by workspace."
         },
         {
           "key": "C",
-          "text": "Call the usage report endpoint with a standard workspace API key copied from one of the product teams."
+          "text": "Collect a workspace API key from each team and call the cost report API once per workspace with that key."
         },
         {
           "key": "D",
-          "text": "Query the Rate Limits API daily, since it reports each workspace's spend alongside its configured limits."
+          "text": "Have an analyst download the Console's Cost page each morning and split it by workspace in a spreadsheet."
         }
       ],
       "correct": [
         "B"
       ],
-      "explanation": "The Usage and Cost Admin API provides programmatic cost data. The cost_report endpoint returns daily USD costs that can be grouped by workspace for chargebacks. It requires an Admin API key or another admin credential, and workspace API keys don't work. Rate-limit headers show remaining capacity, not spend. The Rate Limits API returns configured limits, not costs.",
+      "explanation": "The Usage and Cost Admin API returns cost data in USD that can be grouped by workspace and is meant for reconciling internal records with Anthropic billing. It requires an Admin API key or another admin credential, so one job can cover every workspace. Team-reported token math relies on response counting and list prices instead of billed costs, and depends on every team. Workspace API keys don't work with these endpoints and collecting them violates the stated constraint. A manual Console download isn't automated.",
       "reference": "https://platform.claude.com/docs/en/manage-claude/usage-cost-api"
     },
     {
@@ -2227,29 +2227,29 @@
       "id": "CCDV-076",
       "domain": "Model Selection and Optimization",
       "type": "single",
-      "question": "A developer tracks output tokens for streamed responses by adding up the usage.output_tokens value from each message_delta event. The resulting totals are higher than the billed usage. What is the most likely cause?",
+      "question": "A Python service streams Claude responses to users with the SDK and records each response's token usage for chargeback. A hand-written handler that adds up the usage numbers from each streamed update reports more tokens than the bill, and the team wants accurate counts with little custom parsing. What should they do?",
       "options": [
         {
           "key": "A",
-          "text": "message_delta events report only input tokens, so the values are mislabeled."
+          "text": "Keep streaming and record usage from the complete message the SDK's stream helper assembles at the end."
         },
         {
           "key": "B",
-          "text": "ping events also carry usage fields, and those are being added into the running total."
+          "text": "Keep the handler but divide its running total by the number of usage updates received in each stream."
         },
         {
           "key": "C",
-          "text": "The usage counts in message_delta events are cumulative, so summing double-counts."
+          "text": "Turn streaming off and read usage from the full response, accepting a blank screen until it completes."
         },
         {
           "key": "D",
-          "text": "Streamed responses get a discount that the event data does not reflect."
+          "text": "Estimate output tokens by counting the streamed characters and dividing by a fixed characters-per-token ratio."
         }
       ],
       "correct": [
-        "C"
+        "A"
       ],
-      "explanation": "The streaming docs say the token counts in a message_delta event's usage field are cumulative. Adding them up across events counts the same tokens more than once, so the developer should read the last value instead. message_delta does report output tokens, ping events carry no usage data, and streaming has no billing discount.",
+      "explanation": "The token counts in a streamed message_delta event's usage field are cumulative, so adding them up counts the same tokens repeatedly. The SDK's accumulation helper (for example get_final_message in Python) collects all events into the complete Message, whose usage is the final total, with no custom parsing. Dividing by the number of updates still doesn't give the final value. Turning streaming off fixes counting but breaks the streaming user experience. Character-ratio estimates don't match billed tokens.",
       "reference": "https://platform.claude.com/docs/en/build-with-claude/streaming"
     },
     {
@@ -2285,29 +2285,29 @@
       "id": "CCDV-078",
       "domain": "Model Selection and Optimization",
       "type": "single",
-      "question": "A Python service wants to slow its own request rate before it hits 429 errors by reading the anthropic-ratelimit-* headers on each Messages API response. Calls currently use client.messages.create, which returns only the parsed Message. What should the developer do?",
+      "question": "A Python service wants to slow its own request rate before it starts receiving 429 errors, using the rate-limit headers the API returns on each response. It calls client.messages.create, which returns only the parsed Message, and the team doesn't want to rewrite its response handling. What should the developer do?",
       "options": [
         {
           "key": "A",
-          "text": "Read the values from message.usage, where the SDK copies every rate-limit response header."
+          "text": "Wait until 429 errors occur, then back off for the number of seconds given in the retry-after header."
         },
         {
           "key": "B",
-          "text": "Call client.messages.with_raw_response.create, read headers, then call parse() for the Message."
+          "text": "Count tokens sent locally and compare the total with the organization tier's published rate limits."
         },
         {
           "key": "C",
-          "text": "Set default_headers on the client so the API echoes the rate-limit values in the Message body."
+          "text": "Use the SDK's raw-response accessor to read the headers, then parse it into the same Message object."
         },
         {
           "key": "D",
-          "text": "Turn on debug logging and parse the rate-limit header values out of the SDK's log output."
+          "text": "Read the remaining capacity from the usage field of each returned Message, which reports rate limits."
         }
       ],
       "correct": [
-        "B"
+        "C"
       ],
-      "explanation": "The Python SDK exposes the underlying HTTP response through the .with_raw_response property, which returns an APIResponse whose headers can be read, and parse() returns the same object messages.create would have returned. The usage field reports token counts, not HTTP headers. default_headers controls headers the SDK sends on requests; it does not change what the API returns in the body. Scraping debug logs is fragile, and debug logging can expose request and response bodies.",
+      "explanation": "The Python SDK exposes the HTTP response through .with_raw_response, so the service can read response headers and then call parse() to get the same object messages.create would have returned. Backing off only after a 429 fails the requirement to slow down beforehand. Local counting against published tier limits misses workspace limits, while the rate-limit headers show the most restrictive limit in effect. The usage field reports token counts for the request, not remaining rate-limit capacity.",
       "reference": "https://platform.claude.com/docs/en/cli-sdks-libraries/sdks/python"
     },
     {
@@ -2435,29 +2435,29 @@
       "id": "CCDV-083",
       "domain": "Model Selection and Optimization",
       "type": "single",
-      "question": "A developer moves an app from Claude Opus 4.5 to Claude Opus 4.8. The request still sends thinking type \"enabled\" with budget_tokens set to 16000, and the API now returns a 400 error. What should the developer do?",
+      "question": "A developer moves an app from Claude Opus 4.5 to Claude Opus 4.8, and every request that sets a fixed thinking token budget now fails with a 400 error saying that thinking mode is not supported. Hard questions still need deep reasoning, while simple ones should stay fast. What should the developer do?",
       "options": [
         {
           "key": "A",
-          "text": "Remove budget_tokens, set thinking type to \"adaptive\", and steer depth with output_config effort."
+          "text": "Lower the fixed thinking budget until the new model accepts it, keeping the same manual thinking mode."
         },
         {
           "key": "B",
-          "text": "Keep type \"enabled\" but lower budget_tokens to 1,024, the largest budget newer models accept."
+          "text": "Turn thinking off and add an instruction to think step by step on every request instead of a budget."
         },
         {
           "key": "C",
-          "text": "Add the interleaved-thinking beta header, which re-enables manual budget_tokens thinking on 4.8."
+          "text": "Switch to adaptive thinking, which decides per request how much to think, and steer depth with effort."
         },
         {
           "key": "D",
-          "text": "Set effort to \"adaptive\" inside the thinking object so the model picks its own thinking budget."
+          "text": "Add the interleaved-thinking beta header so that the new model accepts the fixed thinking budget again."
         }
       ],
       "correct": [
-        "A"
+        "C"
       ],
-      "explanation": "Claude 4.7 and later models reject manual extended thinking (type \"enabled\" with budget_tokens) with a 400 error; the documented migration is to remove budget_tokens, set thinking to {type: \"adaptive\"}, and control reasoning depth with output_config.effort. With adaptive thinking Claude decides per request whether and how much to think, so it may skip thinking on easy inputs. Changing the budget value does not help because the enabled type itself is unsupported, and 1,024 is the documented minimum budget, not a maximum. The interleaved-thinking header has no manual-mode effect on 4.7 and later models. \"adaptive\" is a thinking mode, not an effort level, and effort lives in output_config rather than inside the thinking object.",
+      "explanation": "Claude 4.7 and later models reject manual thinking with budget_tokens, and the documented migration is to remove the budget, use adaptive thinking, and control depth with the effort setting. Adaptive thinking evaluates each request and may skip thinking on simple inputs while reasoning deeply on hard ones, which matches both requirements. Changing the budget value doesn't help because the manual mode itself is unsupported. Forcing step-by-step reasoning on every request slows the simple ones and gives up calibrated control. The interleaved-thinking header has no manual-mode effect on 4.7 and later models.",
       "reference": "https://platform.claude.com/docs/en/build-with-claude/extended-thinking"
     },
     {
@@ -2609,30 +2609,30 @@
       "id": "CCDV-089",
       "domain": "Model Selection and Optimization",
       "type": "single",
-      "question": "A platform team hard-codes each Claude model's context window and output limit in a config file, and the values keep going stale as new models launch. They want the app to discover models and their limits at runtime. What should they do?",
+      "question": "A platform team hard-codes each Claude model's context window, output limit, and supported features in a config file, and the values go stale as new models launch. They want the app to pick up new models and their limits automatically, without paid test calls or manual edits. What should they do?",
       "options": [
         {
           "key": "A",
-          "text": "Parse each model ID string, since the ID encodes the model's context window and output limit."
+          "text": "Query the Models API at startup and read each model's input limit, output limit, and capabilities."
         },
         {
           "key": "B",
-          "text": "Send a tiny Messages request to each model and infer its limits from any error text returned."
+          "text": "Derive each model's limits from its model ID string, since the ID encodes the model's family and size."
         },
         {
           "key": "C",
-          "text": "Call GET /v1/models and read max_input_tokens, max_tokens, and capabilities for each model."
+          "text": "Send a small Messages request to each model at startup and infer its limits from the errors returned."
         },
         {
           "key": "D",
-          "text": "Call GET /v1/models with lifecycle omitted, which lists every model including retired ones."
+          "text": "Keep the config file and run a nightly script that scrapes the public models overview page for changes."
         }
       ],
       "correct": [
-        "C"
+        "A"
       ],
-      "explanation": "The Models API (GET /v1/models) lists available models, newest first, and its response includes max_input_tokens, max_tokens, and a capabilities object for each model, so limits can be read at runtime instead of hard-coded. Model IDs identify a model and version but do not encode its token limits. Probing with test requests and parsing error text is slow, costly, and brittle. When lifecycle is omitted the list contains only active and deprecated models; retired models appear only when requested explicitly.",
-      "reference": "https://platform.claude.com/docs/en/models/overview"
+      "explanation": "The List Models endpoint returns available models, newest first, and each entry includes max_input_tokens, max_tokens, and a capabilities object, so limits and features can be read at runtime. Model IDs don't encode token limits, and the docs warn against inferring even a model's line from its ID. Probing with Messages requests costs money and depends on brittle error text. Scraping a documentation page is fragile and still not a programmatic source.",
+      "reference": "https://platform.claude.com/docs/en/api/models/list"
     },
     {
       "id": "CCDV-090",
@@ -2817,58 +2817,58 @@
       "id": "CCDV-096",
       "domain": "Model Selection and Optimization",
       "type": "single",
-      "question": "A company requires all outbound traffic from its Python service to pass through a corporate HTTP proxy. The service calls Claude with the Anthropic Python SDK. How should the developer configure this?",
+      "question": "A company requires all outbound traffic from a Python service to go through a corporate HTTP proxy. The service calls Claude with the Anthropic Python SDK, and the team wants to keep the SDK's default timeouts and connection limits. How should the developer configure this?",
       "options": [
         {
           "key": "A",
-          "text": "Pass a client from the separate httpx package with a proxy set, since any httpx client is accepted."
+          "text": "Set base_url to the proxy's address so the SDK sends each API call to the proxy instead of the API."
         },
         {
           "key": "B",
-          "text": "Pass http_client=DefaultHttpxClient(proxy=...) to the client so the SDK's defaults are kept."
+          "text": "Build a new HTTP client from scratch with only the proxy option set and pass it in as the client."
         },
         {
           "key": "C",
-          "text": "Set base_url to the proxy's address so the SDK tunnels each request through it to the API."
+          "text": "Add the proxy address to each request's extra body fields so the API routes the call through it."
         },
         {
           "key": "D",
-          "text": "Add a proxy field to extra_body on each request so the API routes the call through the proxy."
+          "text": "Pass the SDK's default HTTP client wrapper configured with the proxy as the client's http_client."
         }
       ],
       "correct": [
-        "B"
+        "D"
       ],
-      "explanation": "The Python SDK sends requests with httpx2, and proxies and transports are customized by passing an http_client; the docs recommend DefaultHttpxClient so default settings such as timeouts and connection limits are preserved. A client from the separate httpx package raises a TypeError. base_url (or ANTHROPIC_BASE_URL) changes which server the SDK treats as the API, not the proxy it travels through. extra_body adds fields to the JSON request body sent to the API and does not affect network routing.",
+      "explanation": "Proxies are configured by passing an http_client, and the docs recommend the SDK's DefaultHttpxClient so default settings such as timeouts and connection limits are preserved. A client built from scratch loses those defaults, which fails the stated constraint. base_url changes which server the SDK treats as the API, not the proxy the traffic passes through. extra_body only adds fields to the JSON request body and doesn't affect network routing.",
       "reference": "https://platform.claude.com/docs/en/cli-sdks-libraries/sdks/python"
     },
     {
       "id": "CCDV-097",
       "domain": "Model Selection and Optimization",
       "type": "single",
-      "question": "A developer's dashboard reads anthropic-ratelimit-tokens-remaining and anthropic-ratelimit-tokens-reset from each response. The team assumes capacity drops to zero and refills all at once at the reset time each minute. Which statement is accurate?",
+      "question": "A data-sync service sends Messages API requests as fast as it can, and after a 429 it sleeps until the top of the next minute, assuming the per-minute limit resets all at once. Throughput is poor and 429s spike right after each wake-up. Which change best fits how the API enforces rate limits?",
       "options": [
         {
           "key": "A",
-          "text": "The reset header gives seconds to wait, and the remaining value is exact down to a single token."
+          "text": "Keep bursting but sleep for two full minutes after a 429 so the minute counter has surely reset."
         },
         {
           "key": "B",
-          "text": "These headers always show the organization-level limit, even when a workspace limit is lower."
+          "text": "Pace requests steadily under the limit, and after a 429 wait as long as retry-after says."
         },
         {
           "key": "C",
-          "text": "Capacity refills in one step at the reset time, so requests should be held until that moment."
+          "text": "Spread the requests across several API keys in the same organization so each gets its own limit."
         },
         {
           "key": "D",
-          "text": "Capacity refills continuously; reset is an RFC 3339 time when the limit is fully replenished."
+          "text": "Retry each 429 immediately in a tight loop so requests land the moment capacity becomes free."
         }
       ],
       "correct": [
-        "D"
+        "B"
       ],
-      "explanation": "The API uses a token bucket, so capacity is replenished continuously up to the maximum rather than reset at fixed intervals, and the -reset headers give the RFC 3339 time when the limit will be fully replenished. The remaining token values are rounded to the nearest thousand, and the seconds-to-wait value comes from the retry-after header instead. The anthropic-ratelimit-tokens-* headers show the most restrictive limit in effect, such as a workspace limit. Holding all requests until the reset time wastes capacity that is already refilling.",
+      "explanation": "The API uses a token bucket, so capacity is replenished continuously rather than reset at fixed intervals, and a per-minute limit may be enforced over shorter intervals, so bursts trigger 429s. Steady pacing uses capacity as it refills, and retry-after gives the seconds to wait. Longer sleeps waste capacity that is already refilling. Limits are set at the organization level, with optional workspace limits, so extra keys don't add capacity. Retrying before the retry-after time just fails again.",
       "reference": "https://platform.claude.com/docs/en/api/rate-limits"
     },
     {
@@ -3112,29 +3112,29 @@
       "id": "CCDV-106",
       "domain": "Agents and Workflows",
       "type": "single",
-      "question": "A Python Claude Agent SDK app must guarantee that no Bash command containing \"DROP TABLE\" ever runs. A system prompt instruction forbidding it was ignored once in testing. Which approach enforces the rule deterministically?",
+      "question": "A Python Claude Agent SDK app gives its agent Bash access against a staging database, and a system prompt rule forbidding DROP TABLE was ignored once in testing. The rule must hold on every run, the data cannot be restored if a table is dropped, and Claude should learn why a command was refused so it can try another route. Which approach should the developer take?",
       "options": [
         {
           "key": "A",
-          "text": "Rewrite the system prompt rule in capital letters, repeat it at the end of the prompt, and add examples of refused commands."
+          "text": "Strengthen the system prompt rule with capital letters, repeat it at the end, and add examples of refused commands."
         },
         {
           "key": "B",
-          "text": "Register a PreToolUse hook for Bash that returns permissionDecision \"deny\" with a reason in hookSpecificOutput."
+          "text": "Register a hook that runs after each Bash call completes and alerts the team when the executed command contained DROP TABLE."
         },
         {
           "key": "C",
-          "text": "Register a PostToolUse hook for Bash that sets permissionDecision to \"deny\" whenever the executed command contains DROP TABLE."
+          "text": "Register a hook that inspects each Bash command before it runs and denies matching ones with a reason Claude can see."
         },
         {
           "key": "D",
-          "text": "Register a PreToolUse hook for Bash that returns an empty object {} for matching commands so that the SDK blocks the call."
+          "text": "Review each session transcript after the run finishes and restore the affected tables from backup when a drop appears."
         }
       ],
       "correct": [
-        "B"
+        "C"
       ],
-      "explanation": "Agent SDK hooks are callbacks that run your code at execution points, so a PreToolUse hook with matcher \"Bash\" fires before every Bash call regardless of what the model decides. Returning hookSpecificOutput with hookEventName, permissionDecision \"deny\", and a permissionDecisionReason blocks the call and tells Claude why. Prompt wording, however emphatic, is a request the model may not follow, not enforcement. PostToolUse fires after the tool has already run, so it can log or add context but cannot prevent the command, and returning {} from a hook allows the operation unchanged.",
+      "explanation": "Agent SDK hooks run your own code at fixed points in the loop, so a PreToolUse hook on Bash fires before every command regardless of what the model decides, and returning a deny decision with a reason blocks the call and tells Claude why. Prompt wording, however emphatic, is a request the model may not follow, so it fails the every-run requirement. A hook that fires after the tool has run (PostToolUse) can log or add context but cannot prevent the drop, which is unrecoverable here. Transcript review is also after the fact, and the stem says the data cannot be restored.",
       "reference": "https://code.claude.com/docs/en/agent-sdk/hooks"
     },
     {
@@ -3170,30 +3170,30 @@
       "id": "CCDV-108",
       "domain": "Agents and Workflows",
       "type": "single",
-      "question": "A team runs a Claude Agent SDK query that often spawns several subagents. Finance wants a hard ceiling on the estimated spend of each run, including subagent work. Which configuration meets this requirement?",
+      "question": "A team runs a Claude Agent SDK query that often spawns several subagents, and how many it spawns varies a lot between runs. Finance wants each run stopped once its estimated dollar spend reaches a set amount, including whatever the subagents spend. Which configuration meets this requirement?",
       "options": [
         {
           "key": "A",
-          "text": "Set maxTurns on the main query; subagent turns count toward it, so the turn cap also caps total spend."
+          "text": "Cap the number of tool-use turns on the main query, since fewer round trips generally means fewer tokens per run."
         },
         {
           "key": "B",
-          "text": "Set effort to \"low\" so the main agent and all of its subagents consume fewer tokens."
+          "text": "Lower the effort setting so the main agent and each of its subagents tend to use fewer tokens on every response."
         },
         {
           "key": "C",
-          "text": "Set maxBudgetUsd; subagent spend counts toward the cap, and the run ends with error_max_budget_usd."
+          "text": "Allow only one subagent to run at a time, so subagent work happens one after another instead of in parallel."
         },
         {
           "key": "D",
-          "text": "Set CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS to 1 so that only one subagent can ever run during the query."
+          "text": "Set the query's spend cap, which counts subagent spend toward the total and ends the run when it is reached."
         }
       ],
       "correct": [
-        "C"
+        "D"
       ],
-      "explanation": "maxBudgetUsd / max_budget_usd caps estimated spend. The docs state that subagent spend counts toward it, that spawning further subagents fails once the cap is reached, and that the query ends with the error_max_budget_usd subtype. maxTurns counts tool-use round trips, not dollars. Lower effort reduces tokens but sets no ceiling. Limiting concurrency affects how many subagents run at once, not total cost.",
-      "reference": "https://code.claude.com/docs/en/agent-sdk/subagents"
+      "explanation": "The Agent SDK's max budget option (maxBudgetUsd / max_budget_usd) stops the loop at an estimated spend threshold; subagent spend counts toward it, further subagent spawns fail once it is reached, and the run ends with a budget error result. Because the check happens after each response arrives, spend can slightly overshoot, so the docs advise leaving headroom. A turn cap counts tool-use round trips, not dollars, and turn cost varies widely. Lower effort reduces typical token use but sets no ceiling. Limiting concurrency changes how subagents are scheduled, not how much they spend in total.",
+      "reference": "https://code.claude.com/docs/en/agent-sdk/agent-loop"
     },
     {
       "id": "CCDV-109",
@@ -3228,58 +3228,58 @@
       "id": "CCDV-110",
       "domain": "Agents and Workflows",
       "type": "single",
-      "question": "In an isolated container, a developer configures a Claude Agent SDK agent with permissionMode \"bypassPermissions\" and allowedTools [\"Read\", \"Grep\"], expecting the agent to be unable to run shell commands. During testing, the agent runs Bash anyway. How should the developer prevent Bash from being used?",
+      "question": "An unattended Claude Agent SDK agent runs in an isolated container with permission checks bypassed, and its pre-approved tools list names only Read and Grep, yet during testing it still runs shell commands. The team wants to keep bypass mode for speed but make shell access impossible. What should the developer do?",
       "options": [
         {
           "key": "A",
-          "text": "Add \"Bash\" to disallowedTools, which removes the tool from the request and is enforced even in bypassPermissions."
+          "text": "Keep bypass mode and add Bash to the disallowed tools, which removes it from the request in every permission mode."
         },
         {
           "key": "B",
-          "text": "Add \"Bash\" to allowedTools with an empty specifier, which tells bypassPermissions that the tool is not approved."
+          "text": "Keep bypass mode and register a permission callback that rejects every Bash request the agent makes during the run."
         },
         {
           "key": "C",
-          "text": "Move \"Read\" and \"Grep\" to the front of allowedTools, because bypassPermissions only approves the first entries."
+          "text": "Keep bypass mode and add a system prompt line telling the agent that shell commands are unavailable in this container."
         },
         {
           "key": "D",
-          "text": "Switch permissionMode to \"acceptEdits\", which approves only the tools in allowedTools and blocks every other tool."
+          "text": "Switch to the mode that auto-approves file edits, since it only approves the tools named in the pre-approved list."
         }
       ],
       "correct": [
         "A"
       ],
-      "explanation": "allowedTools only pre-approves the tools it lists. Unlisted tools fall through to the permission mode, and bypassPermissions approves them, so allowedTools does not constrain that mode. A bare-name disallowedTools entry removes the tool definition so Claude can't attempt it, and deny rules apply even in bypassPermissions. List order has no effect. acceptEdits auto-approves file operations; it does not limit the agent to the allowedTools list.",
+      "explanation": "A pre-approved (allowed) tools list only approves what it names; unlisted tools fall through to the permission mode, and bypassPermissions approves them, so the list never restricted Bash. A bare-name entry in disallowedTools removes the tool definition so Claude cannot even attempt it, and deny rules hold even in bypassPermissions. A canUseTool callback is never reached for calls that bypass mode has already approved. A prompt line is a request, not enforcement. acceptEdits auto-approves file operations and does not limit the agent to the allowed list.",
       "reference": "https://code.claude.com/docs/en/agent-sdk/permissions"
     },
     {
       "id": "CCDV-111",
       "domain": "Agents and Workflows",
       "type": "single",
-      "question": "A team deploys a headless Claude Agent SDK agent with no human available to answer permission prompts. They want a fixed, explicit tool surface: Read, Glob, and Grep should run, and anything else that would normally prompt should be refused outright instead of left waiting. Which configuration fits best?",
+      "question": "A team deploys a headless Claude Agent SDK agent with no human available to answer permission prompts. Read, Glob, and Grep must run without friction, and any call that would normally need approval must be refused immediately rather than left waiting or silently allowed. Which configuration fits best?",
       "options": [
         {
           "key": "A",
-          "text": "Set allowedTools to the three tools and permissionMode to \"plan\" so every other tool call is denied automatically."
+          "text": "Pre-approve the three tools and use plan mode, which explores and proposes changes without executing anything else."
         },
         {
           "key": "B",
-          "text": "Set allowedTools to the three tools and permissionMode to \"dontAsk\" so any call that would prompt is denied."
+          "text": "Pre-approve the three tools and use the mode that converts every would-be permission prompt into a denial."
         },
         {
           "key": "C",
-          "text": "Set allowedTools to the three tools and permissionMode to \"default\" with no canUseTool callback registered."
+          "text": "Pre-approve the three tools, keep the default mode, and simply leave the permission callback unregistered."
         },
         {
           "key": "D",
-          "text": "Set allowedTools to the three tools and permissionMode to \"bypassPermissions\" so that no prompts ever appear."
+          "text": "Pre-approve the three tools and bypass permission checks so that no prompt can ever leave the agent waiting."
         }
       ],
       "correct": [
         "B"
       ],
-      "explanation": "The docs recommend pairing allowedTools with permissionMode \"dontAsk\" for a locked-down agent: listed tools are approved, and any call that would otherwise prompt is denied without calling canUseTool. Plan mode is for exploring and proposing changes, and it sends edits to canUseTool. Relying on default mode with no callback is the \"silent reliance\" on canUseTool being absent that dontAsk is meant to replace. bypassPermissions approves every unlisted tool.",
+      "explanation": "The docs recommend pairing allowedTools with the dontAsk permission mode for a fixed tool surface on a headless agent: listed tools run, and any call that would prompt is denied without calling canUseTool. Plan mode is for producing a plan, and file edits in it still go to the canUseTool callback rather than being refused. Relying on default mode with no callback is the silent reliance on canUseTool being absent that dontAsk is meant to replace. Bypassing permissions approves every unlisted tool, which breaks the refuse-by-default requirement.",
       "reference": "https://code.claude.com/docs/en/agent-sdk/permissions"
     },
     {
@@ -3315,34 +3315,34 @@
       "id": "CCDV-113",
       "domain": "Agents and Workflows",
       "type": "multi",
-      "question": "A developer uses Claude Agent SDK sessions to let users explore two alternative refactoring approaches from the same starting analysis. Which TWO statements about sessions are accurate? (Choose TWO.)",
+      "question": "A Claude Agent SDK app lets users try two alternative refactoring approaches that both start from the same completed analysis session. The original analysis thread must stay resumable, and if the user rejects an approach its file edits must be undone. Which TWO actions should the developer take? (Choose TWO.)",
       "options": [
         {
           "key": "A",
-          "text": "Forking a session creates a new session ID with a copy of the history, and the original session stays unchanged."
+          "text": "Fork the analysis session for the second approach, giving it its own session ID while the original history stays unchanged."
         },
         {
           "key": "B",
-          "text": "Forking a session also snapshots the working directory, so file edits in the fork are invisible to the original."
+          "text": "Rely on forking to isolate file edits, since each forked session works against its own snapshot of the working directory."
         },
         {
           "key": "C",
-          "text": "Resuming a session restores the conversation and also reverts files the agent changed after that point."
+          "text": "Resume the original session after the rejected attempt, since resuming rolls back files edited after that point in history."
         },
         {
           "key": "D",
-          "text": "Sessions persist the conversation, not files; file checkpointing is the feature for reverting file changes."
+          "text": "Enable file checkpointing so the rejected approach's edits can be reverted, since sessions persist only the conversation."
         },
         {
           "key": "E",
-          "text": "Continue requires passing a session ID, while resume automatically picks the most recent session in the directory."
+          "text": "Use continue for both approaches, since it opens a new branch from the most recent session each time it is called."
         }
       ],
       "correct": [
         "A",
         "D"
       ],
-      "explanation": "A fork gets its own session ID, starts from a copy of the original history, and leaves the original untouched. Sessions persist conversation history, not files; reverting file changes requires file checkpointing. File edits in a fork are real and visible to any session using the same directory, and resume does not revert files. It's the other way around for continue and resume: continue finds the most recent session, and resume takes a specific ID.",
+      "explanation": "Forking creates a new session that starts from a copy of the original history and gets its own ID, while the original stays unchanged and can still be resumed. Sessions persist the conversation, not the filesystem, so reverting file edits requires file checkpointing. A fork's file edits are real and visible to any session using the same directory, and resuming a session does not revert files. Continue adds to the most recent session in the directory rather than branching from it.",
       "reference": "https://code.claude.com/docs/en/agent-sdk/sessions"
     },
     {
@@ -4234,63 +4234,63 @@
       "id": "CCDV-144",
       "domain": "Prompt and Context Engineering",
       "type": "single",
-      "question": "An agent's history fills with old file-read results. The team enables the clear_tool_uses_20250919 context-editing strategy but must never lose results from their web_search tool. Which configuration and behavior are correct?",
+      "question": "An agent's history fills with stale file-read results, so the team enables the API's server-side tool-result clearing. Results from their web_search tool must never be cleared, and an engineer asks whether the client should also rewrite its local history to match. Which plan is correct?",
       "options": [
         {
           "key": "A",
-          "text": "Set keep to 0, because clearing is done client-side and the SDK restores web_search results."
+          "text": "Keep many recent tool uses after clearing, so web search results are rarely old enough to be removed."
         },
         {
           "key": "B",
-          "text": "Add web_search to clear_tool_inputs, because that list protects the named tools from clearing."
+          "text": "Exclude web_search by name from clearing, and keep sending the full history from the client unchanged."
         },
         {
           "key": "C",
-          "text": "Add web_search to exclude_tools; clearing is applied server-side and the client keeps full history."
+          "text": "Exclude web_search by name from clearing, and delete cleared results locally so client and server match."
         },
         {
           "key": "D",
-          "text": "Set a trigger of 0 tokens, because clearing then happens only for tools that were never excluded."
+          "text": "Keep the default clearing settings and tell Claude in the prompt to rerun any searches it can't see."
         }
       ],
       "correct": [
-        "C"
+        "B"
       ],
-      "explanation": "exclude_tools lists tool names whose uses and results are never cleared, and context editing is applied server-side before the prompt reaches Claude, so your client keeps the full unmodified history. clear_tool_inputs is a boolean that also clears tool call parameters, the SDK does not restore cleared results, and the trigger controls when clearing starts rather than which tools are protected.",
+      "explanation": "The clearing strategy accepts a list of tool names whose uses and results are never cleared (exclude_tools), which is the direct way to protect web_search. Context editing is applied server-side before the prompt reaches Claude, and the client keeps the full, unmodified history with no need to sync to the edited version, so deleting results locally is unnecessary. Keeping more recent tool uses only delays clearing, so older search results can still be removed. Rerunning searches adds cost and latency and still loses the original results.",
       "reference": "https://platform.claude.com/docs/en/build-with-claude/context-editing"
     },
     {
       "id": "CCDV-145",
       "domain": "Prompt and Context Engineering",
       "type": "multi",
-      "question": "A team adds the memory tool (memory_20250818) so their agent can keep notes across sessions. Which TWO statements about this tool are accurate? (Choose TWO.)",
+      "question": "A multi-tenant SaaS app adds Claude's memory tool so its agent can keep notes across sessions. Each customer's notes must stay private to that customer, and a crafted request must never reach files outside the memory area. Which TWO actions should the developer take? (Choose TWO.)",
       "options": [
         {
           "key": "A",
-          "text": "Anthropic stores the memory files server-side, so no storage code is needed in the app."
+          "text": "Rely on Anthropic to store and isolate each customer's memory files, since memory persists on the API side between sessions."
         },
         {
           "key": "B",
-          "text": "It is client-side: Claude requests file operations and the application executes them."
+          "text": "Preload every memory file into the system prompt at session start so Claude never needs to request a file during the task."
         },
         {
           "key": "C",
-          "text": "All memory files are loaded into the context window automatically at the start of a session."
+          "text": "Implement handlers that run Claude's memory operations against storage the app controls, mapped to a per-customer directory."
         },
         {
           "key": "D",
-          "text": "The developer must add their own system prompt telling Claude to check memory first."
+          "text": "Skip path checks in the handler, since Claude only ever requests paths that sit under the memory directory it was given."
         },
         {
           "key": "E",
-          "text": "The handler must validate every path so operations cannot escape the /memories directory."
+          "text": "Validate every path in every memory command and reject anything that resolves outside the memories directory."
         }
       ],
       "correct": [
-        "B",
+        "C",
         "E"
       ],
-      "explanation": "The memory tool operates client-side: Claude requests operations and your application executes them against storage you control, and you must guard against path traversal such as /memories/../../secrets.env. Memory is not stored by Anthropic, files are read on demand (supporting just-in-time retrieval) rather than all preloaded, and the API automatically adds the instruction to view the memory directory first.",
+      "explanation": "The memory tool is client-side: Claude requests file operations and your application executes them against storage you control, such as a per-user directory, so isolation between customers is the app's job. The docs warn that a path like /memories/../../secrets.env can escape the directory, so every path in every command must be validated. Anthropic does not store the memory files for you. Memory files are read on demand rather than preloaded, which keeps context small. Trusting Claude's requested paths ignores the documented traversal risk.",
       "reference": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/memory-tool"
     },
     {
@@ -4534,58 +4534,58 @@
       "id": "CCDV-154",
       "domain": "Tools and MCPs",
       "type": "single",
-      "question": "A create_shipment tool has nested objects and a format-sensitive date field, and Claude often structures the optional fields wrongly despite a good description. The developer adds input_examples to the tool definition. What must be true of those examples?",
+      "question": "A create_shipment tool has nested address objects, optional customs fields, and a date field that must use a specific format. The description is already detailed, yet Claude still often nests the optional fields wrongly. What is the most effective next step?",
       "options": [
         {
           "key": "A",
-          "text": "Each example must be valid against the tool's input_schema, or the request returns a 400 error."
+          "text": "Split create_shipment into a separate small tool for each optional field so that every tool has a flat schema."
         },
         {
           "key": "B",
-          "text": "Examples must include every optional property, or Claude will treat those properties as forbidden."
+          "text": "Shorten the description so Claude pays more attention to the schema, since long descriptions dilute the field rules."
         },
         {
           "key": "C",
-          "text": "Examples are free of charge because they are sent separately from the prompt's input tokens."
+          "text": "Add a few schema-valid example inputs to the tool definition, including one that leaves the optional fields out."
         },
         {
           "key": "D",
-          "text": "Examples work only on server tools such as web search, not on tools that the developer defines."
+          "text": "Mark every field as a required string and have the handler parse and re-nest the values into the right structure."
         }
       ],
       "correct": [
-        "A"
+        "C"
       ],
-      "explanation": "input_examples must each validate against the input_schema; invalid examples return a 400 error. Examples can omit optional fields (the docs show one omitting unit to demonstrate it is optional), they add roughly 20-200 prompt tokens each, and they are supported on user-defined tools but not on server tools such as web search.",
+      "explanation": "For tools with nested objects, optional parameters, or format-sensitive inputs, Anthropic suggests adding concrete example inputs (input_examples) that must validate against the schema, which show Claude when to include optional fields and how to structure them. Splitting into many tiny tools goes against the guidance to consolidate related operations and makes selection more ambiguous. Shortening the description removes what Anthropic calls the most important factor in tool performance. Making everything a required string forces Claude to invent values for optional fields and just moves validation into your handler.",
       "reference": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/define-tools"
     },
     {
       "id": "CCDV-155",
       "domain": "Tools and MCPs",
       "type": "single",
-      "question": "On a model that supports forced tool use, a developer sets tool_choice to {\"type\": \"tool\", \"name\": \"get_weather\"} and also asks Claude to briefly explain its plan first. Responses contain only the tool_use block. How should the developer get both an explanation and the tool call?",
+      "question": "A support app forces Claude to call lookup_order on every request. Product now wants Claude to first tell the user in one line what it is checking, and to reply to simple greetings without any lookup. What should the developer change?",
       "options": [
         {
           "key": "A",
-          "text": "Switch tool_choice to {\"type\": \"any\"}, which allows text before the tool call while still forcing it."
+          "text": "Keep forcing lookup_order and add a system prompt instruction telling Claude to explain its plan before the call."
         },
         {
           "key": "B",
-          "text": "Keep the forced tool and add a prefilled assistant turn that contains the start of an explanation."
+          "text": "Let Claude decide whether to call tools, and instruct it to use lookup_order when the user asks about an order."
         },
         {
           "key": "C",
-          "text": "Keep the forced tool and increase max_tokens so the response has room for text before the call."
+          "text": "Keep forcing lookup_order and add a user_note parameter to the tool whose value the app shows to the user first."
         },
         {
           "key": "D",
-          "text": "Use tool_choice auto and add an explicit instruction in the user message to use get_weather."
+          "text": "Stop naming one specific tool and instead require Claude to call any one of the provided tools on every request."
         }
       ],
       "correct": [
-        "D"
+        "B"
       ],
-      "explanation": "With tool_choice any or tool, the API prefills the assistant message to force a tool, so no natural-language text appears before tool_use blocks even if requested; Anthropic suggests auto plus an explicit instruction in the user message. any behaves the same way as tool here, prefilling is not the mechanism to fix this, and max_tokens does not change the forced prefill.",
+      "explanation": "When tool use is forced to a specific tool or to any tool, the API prefills the assistant turn, so Claude emits no natural-language text before the tool_use block even if asked; Anthropic's recommendation is automatic tool choice plus an explicit instruction to use the tool. That also lets Claude answer a greeting without a lookup. An instruction to explain first is ignored under forcing. A user_note parameter could carry a message, but every greeting would still trigger a forced lookup. Requiring any tool has the same prefill behavior and still blocks plain replies.",
       "reference": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/define-tools"
     },
     {
@@ -4621,29 +4621,29 @@
       "id": "CCDV-157",
       "domain": "Tools and MCPs",
       "type": "single",
-      "question": "A banking agent's transfer tools have side effects, so the team wants Claude to make at most one tool call per response while still being free to reply in plain text. How should they configure the request?",
+      "question": "A banking agent has transfer tools with side effects, and the team wants each transfer's result seen before any other tool call is made. Claude must still be able to answer purely informational questions in plain text without calling a tool. How should they configure tool use?",
       "options": [
         {
           "key": "A",
-          "text": "Set a top-level request parameter parallel_tool_calls to false alongside the tools array."
+          "text": "Disable parallel tool use while keeping automatic tool choice, so Claude makes at most one call per response."
         },
         {
           "key": "B",
-          "text": "Set tool_choice to {\"type\": \"none\"} and re-enable tools only for the turns needing a call."
+          "text": "Require a tool call on every response and disable parallel tool use, so Claude makes exactly one call each turn."
         },
         {
           "key": "C",
-          "text": "Set tool_choice to {\"type\": \"auto\", \"disable_parallel_tool_use\": true} on each request."
+          "text": "Keep parallel tool use on and have the app run all of the returned tool calls concurrently to keep latency low."
         },
         {
           "key": "D",
-          "text": "Set tool_choice to {\"type\": \"any\", \"disable_parallel_tool_use\": true} on each request."
+          "text": "Keep parallel tool use on, execute only the first call in each response, and drop the others without returning results."
         }
       ],
       "correct": [
-        "C"
+        "A"
       ],
-      "explanation": "disable_parallel_tool_use goes inside the tool_choice object; with auto it means Claude calls at most one tool per response and can still answer in plain text. There is no top-level parallel_tool_calls parameter, none prevents all tool use, and with any (where supported) it means exactly one tool call, removing the plain-text option.",
+      "explanation": "Setting disable_parallel_tool_use inside tool_choice with the default auto type means Claude calls at most one tool per response and can still answer in plain text. Combining it with a required tool call (any) means exactly one call every time, which removes the plain-text option. Running parallel calls concurrently is suited to independent read-only tools, not side-effecting transfers that need ordering. Every tool_use block needs a matching tool_result, so silently dropping calls breaks the conversation; skipped calls must be reported with is_error.",
       "reference": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/parallel-tool-use"
     },
     {
@@ -4708,34 +4708,34 @@
       "id": "CCDV-160",
       "domain": "Tools and MCPs",
       "type": "multi",
-      "question": "A developer adds the web search server tool to a research assistant alongside some custom client tools. Which TWO statements describe how the web search tool behaves? (Choose TWO.)",
+      "question": "A developer's agent loop treats every non-final response as a request to run client tools. After adding Anthropic's web search server tool, long research turns sometimes come back paused with server search blocks and no client tool calls, and the loop crashes. Which TWO changes should the developer make? (Choose TWO.)",
       "options": [
         {
           "key": "A",
-          "text": "It runs on Anthropic's infrastructure, so the app writes no execution handler for it."
+          "text": "When a turn is paused by the server-side tool loop, send the assistant content back unchanged so Claude can continue."
         },
         {
           "key": "B",
-          "text": "The app must run each search itself and return results in a tool_result block."
+          "text": "Write a local search handler and return its results as a tool_result for each server-side search block in the response."
         },
         {
           "key": "C",
-          "text": "Search failures must be reported back by the app using is_error on a tool_result."
+          "text": "Treat a paused turn as the final answer and show the partial response to the user so the loop never needs to stall."
         },
         {
           "key": "D",
-          "text": "On stop_reason \"pause_turn\", the app sends the response back so Claude can continue."
+          "text": "Restart from the user's original question with a larger max_tokens value whenever a research turn comes back paused."
         },
         {
           "key": "E",
-          "text": "The app must supply an input_schema describing the search query for the tool."
+          "text": "Run handlers and return tool_result blocks only for client tool calls, leaving server tool blocks to Anthropic."
         }
       ],
       "correct": [
         "A",
-        "D"
+        "E"
       ],
-      "explanation": "Server tools such as web_search run on Anthropic's infrastructure, so your application has no handler; when the server-side loop hits its iteration limit, the response has stop_reason pause_turn and you send the assistant content back to let Claude continue. Client tools are the ones you execute and answer with tool_result, server tool errors are handled by Claude without is_error from you, and server tools are declared by type rather than a custom input_schema.",
+      "explanation": "Server tools such as web search run on Anthropic's infrastructure, so the app writes no handler for them and only answers its own client tool_use blocks with tool_result. When the server-side sampling loop hits its iteration limit, the response has stop_reason pause_turn and the app should send the response back as-is to let Claude continue. A local handler duplicates work the server already does and mismatches the protocol. Treating the pause as final shows an incomplete answer, and restarting with more max_tokens discards progress without addressing the iteration limit.",
       "reference": "https://platform.claude.com/docs/en/build-with-claude/handling-stop-reasons"
     },
     {
@@ -4858,29 +4858,29 @@
       "id": "CCDV-165",
       "domain": "Tools and MCPs",
       "type": "single",
-      "question": "A custom Skill works in Claude Code, where its script calls an external REST API. When the same Skill is uploaded and used through the Claude API, the script fails. What is the most likely reason?",
+      "question": "A team's Skill bundles a script that fetches live exchange rates from an external REST API and then formats an invoice; it works in Claude Code. They now need the same capability in a Claude API app, where Skills run in the code execution container. Which design will work?",
       "options": [
         {
           "key": "A",
-          "text": "Skills uploaded through the API are private to the uploader and cannot run any bundled scripts."
+          "text": "Upload the Skill unchanged, because the code execution container makes the outbound API call just as Claude Code does."
         },
         {
           "key": "B",
-          "text": "API Skills run in the code execution container, which has no network access."
+          "text": "Add a step to SKILL.md that installs an HTTP client library at runtime before the script calls the exchange-rate API."
         },
         {
           "key": "C",
-          "text": "The API requires Skill scripts to be rewritten as MCP servers before they can run."
+          "text": "Have the app fetch the rates itself, for example through a client tool, and keep the Skill for the invoice formatting."
         },
         {
           "key": "D",
-          "text": "The API loads only SKILL.md and silently ignores every other file in the Skill directory."
+          "text": "Upload the Skill in claude.ai settings so that the API workspace inherits it along with claude.ai's network access."
         }
       ],
       "correct": [
-        "B"
+        "C"
       ],
-      "explanation": "On the Claude API, Skills require the code execution tool and run in a sandboxed container with no network access and no runtime package installation, whereas Claude Code Skills have the network access of the user's machine. API-uploaded Skills are shared workspace-wide, scripts run normally via bash, and bundled files are read as needed.",
+      "explanation": "On the Claude API, Skills run in a sandboxed container with no network access and no runtime package installation, so a script that calls an external API cannot work there; the network call has to happen in the application, for example in a client tool the app executes, while the Skill keeps the offline formatting logic. Uploading unchanged fails because the container cannot reach the internet. Installing packages at runtime is not allowed and would not add network access anyway. Custom Skills do not sync across surfaces, so a claude.ai upload is not available to the API.",
       "reference": "https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview"
     },
     {
@@ -4916,29 +4916,29 @@
       "id": "CCDV-167",
       "domain": "Tools and MCPs",
       "type": "single",
-      "question": "A team creates a Claude Code skill at .claude/skills/deploy/SKILL.md that deploys to production with a target environment argument. They never want Claude to run it on its own. Which setup is correct?",
+      "question": "A team writes a Claude Code deploy skill that takes the target environment as an argument. Engineers must be able to run it on demand as /deploy staging, but Claude must never decide to deploy on its own because the code looks ready. Which setup meets both needs?",
       "options": [
         {
           "key": "A",
-          "text": "Set allowed-tools to an empty list so that Claude cannot call any tools when the skill runs."
+          "text": "Give the skill an empty pre-approved tools list so Claude has no permission to run anything while the skill is active."
         },
         {
           "key": "B",
-          "text": "Leave the description field empty so Claude cannot match the skill to any user request."
+          "text": "Mark the skill as manual-only in its frontmatter, and read the target environment from the arguments passed when invoked."
         },
         {
           "key": "C",
-          "text": "Set disable-model-invocation: true and reference the environment with $ARGUMENTS."
+          "text": "Mark the skill as invocable only by Claude so it is hidden from the slash menu and engineers cannot trigger it by mistake."
         },
         {
           "key": "D",
-          "text": "Move the file into ~/.claude/skills/ so that it is only usable through manual invocation."
+          "text": "Write a description that says never to use this skill unless the user explicitly asks, and leave all other settings default."
         }
       ],
       "correct": [
-        "C"
+        "B"
       ],
-      "explanation": "disable-model-invocation: true prevents Claude from loading the skill automatically, for workflows such as deploys that should only run via /deploy, and $ARGUMENTS receives the arguments passed when invoking it. allowed-tools pre-approves tools rather than restricting them, an empty description does not reliably block invocation, and the personal skills directory changes scope, not who can invoke it.",
+      "explanation": "Setting disable-model-invocation: true makes a skill manual-only: you can run it with /deploy, but Claude cannot invoke it on its own, which the docs recommend for side-effecting workflows such as deploys; the environment arrives through $ARGUMENTS. Pre-approved tools (allowed-tools) only skip prompts and do not restrict which tools are callable. user-invocable: false is the opposite setting, letting only Claude invoke the skill. A description is guidance Claude uses to decide relevance, not an enforced block.",
       "reference": "https://code.claude.com/docs/en/slash-commands"
     },
     {
@@ -5066,34 +5066,34 @@
       "id": "CCDV-172",
       "domain": "Tools and MCPs",
       "type": "multi",
-      "question": "A team wants to use the MCP connector in the Messages API (mcp_servers plus an mcp_toolset entry) with an MCP server they built. Which TWO statements reflect the connector's documented limitations? (Choose TWO.)",
+      "question": "A team built an MCP server that exposes tools, prompts, and resources and today runs only on laptops over stdio. They now want a Messages API app to use it through Anthropic's MCP connector instead of writing their own MCP client. Which TWO decisions are required? (Choose TWO.)",
       "options": [
         {
           "key": "A",
-          "text": "The connector exposes the server's tools, resources, and prompts equally to Claude."
+          "text": "Deploy the server at a publicly reachable HTTP endpoint using Streamable HTTP or SSE so the connector can reach it."
         },
         {
           "key": "B",
-          "text": "The connector launches local stdio servers on Anthropic's side from a command string."
+          "text": "Pass the server's stdio launch command in the request so that Anthropic starts the server process on its own side."
         },
         {
           "key": "C",
-          "text": "Only the tool calls part of the MCP specification is currently supported by the connector."
+          "text": "Expect only the tools to be available via the connector, and run an MCP client in the app if prompts or resources are needed."
         },
         {
           "key": "D",
-          "text": "The server must be publicly exposed over HTTP, via Streamable HTTP or SSE transport."
+          "text": "Omit any OAuth token from the request, because Anthropic completes the OAuth flow with the server on the app's behalf."
         },
         {
           "key": "E",
-          "text": "Anthropic runs the OAuth flow, so authorization_token can be omitted for secure servers."
+          "text": "Keep the server reachable only inside the company network, since the connector runs within the app's private network."
         }
       ],
       "correct": [
-        "C",
-        "D"
+        "A",
+        "C"
       ],
-      "explanation": "The MCP connector docs list two limitations: of the MCP feature set, only tool calls are supported, and the server must be publicly exposed through HTTP (Streamable HTTP or SSE), since local stdio servers cannot be connected directly. Resources and prompts are therefore not exposed, and API consumers must handle the OAuth flow themselves and pass the token as authorization_token.",
+      "explanation": "The MCP connector requires a server that is publicly exposed over HTTP (Streamable HTTP or SSE), and local stdio servers cannot be connected directly. Of the MCP feature set it currently supports only tool calls, so prompts or resources require managing your own MCP client, for which the SDKs provide client-side helpers. Anthropic does not launch stdio servers, the app must run the OAuth flow itself and pass the access token as authorization_token, and the connector calls from Anthropic's side rather than from inside your private network.",
       "reference": "https://platform.claude.com/docs/en/agents-and-tools/mcp-connector"
     },
     {
@@ -5545,58 +5545,58 @@
       "id": "CCDV-188",
       "domain": "Security and Safety",
       "type": "single",
-      "question": "A platform team wants Claude Code to refuse any Bash command containing \"terraform destroy\" and tell Claude why. They register a PreToolUse hook with matcher \"Bash\" that inspects the command and, on a match, prints a reason to stderr and exits with code 1. In testing, the command still runs. What is the fix?",
+      "question": "A platform team lets Claude Code run terraform freely in disposable sandbox workspaces, but terraform destroy must never run while the selected Terraform workspace is production. The same commands are typed in both cases, so only the current workspace tells them apart. When a destroy is refused, Claude should be told why. Which approach fits?",
       "options": [
         {
           "key": "A",
-          "text": "Change the matcher to \"*\" so that the hook also runs for the Bash tool's internal subcommands as well as the top-level call."
+          "text": "Add a permission deny rule matching terraform destroy, since a rule can tell which workspace is active"
         },
         {
           "key": "B",
-          "text": "Exit with code 2 instead, which blocks the tool call and feeds the stderr message back to Claude as the reason."
+          "text": "Add a pre-execution hook on Bash that checks the active workspace and blocks a destroy with a reason"
         },
         {
           "key": "C",
-          "text": "Move the hook to the PostToolUse event so that it sees the command's actual output before deciding to block it."
+          "text": "Add a CLAUDE.md rule asking Claude to check the workspace itself before ever running terraform destroy"
         },
         {
           "key": "D",
-          "text": "Print the reason to stdout as plain text, since Claude Code blocks any PreToolUse hook that writes to stdout."
+          "text": "Add a hook that runs after each Bash call and alerts the team when a destroy ran against production"
         }
       ],
       "correct": [
         "B"
       ],
-      "explanation": "For PreToolUse, exit code 2 is a blocking error: the tool call is stopped and stderr is fed back as the reason. Other non-zero codes such as 1 are non-blocking, so the action continues with only a hook-error notice. The matcher was already correct, PostToolUse runs after the tool has executed and can't prevent it, and plain stdout text does not block a tool call.",
+      "explanation": "Permission rules match the command text, so a deny rule for terraform destroy would block it in sandbox workspaces too and cannot look at which workspace is selected. A PreToolUse hook is a script that runs before the tool call, so it can check the current workspace and exit with code 2 to block the call, and its stderr message is passed to Claude as the reason. A CLAUDE.md rule is guidance the model can still ignore, which is not acceptable for an irreversible action. A hook that runs after the command only reports damage that has already happened.",
       "reference": "https://code.claude.com/docs/en/hooks"
     },
     {
       "id": "CCDV-189",
       "domain": "Security and Safety",
       "type": "single",
-      "question": "A team wants every file Claude Code edits or writes to be automatically run through their formatter, and they want the behavior shared with everyone who clones the repository. How should they configure this?",
+      "question": "A team wants every file Claude Code edits or writes to be run through their formatter automatically, every time, without relying on Claude to remember. The behavior must apply to everyone who clones the repository. How should they configure this?",
       "options": [
         {
           "key": "A",
-          "text": "Add an instruction to CLAUDE.md telling Claude to always run the formatter after it finishes editing any file."
+          "text": "Add a hook that runs after each successful edit or write tool call, in the project settings file committed to the repo."
         },
         {
           "key": "B",
-          "text": "Add a PreToolUse hook with matcher \"Edit|Write\" to ~/.claude/settings.json on each developer's machine."
+          "text": "Add an instruction to the project CLAUDE.md telling Claude to always run the formatter after it finishes editing any file."
         },
         {
           "key": "C",
-          "text": "Add a UserPromptSubmit hook to .claude/settings.local.json that formats the whole repository on every prompt."
+          "text": "Add a hook that runs before each edit or write tool call, defined in the project settings file committed to the repository."
         },
         {
           "key": "D",
-          "text": "Add a PostToolUse hook with matcher \"Edit|Write\" that runs the formatter, in the committed .claude/settings.json."
+          "text": "Add a hook that runs after each edit or write tool call, defined in each developer's personal user-level settings file."
         }
       ],
       "correct": [
-        "D"
+        "A"
       ],
-      "explanation": "PostToolUse hooks run after a tool completes, the matcher \"Edit|Write\" targets those tools, and .claude/settings.json is the project-scoped settings file that can be committed and shared. CLAUDE.md is context Claude may not follow deterministically, while hooks are executed by the harness every time. PreToolUse fires before the edit exists, ~/.claude/settings.json is personal, and settings.local.json is gitignored and not shared.",
+      "explanation": "A PostToolUse hook with an Edit|Write matcher runs after the edit succeeds, so the file exists to be formatted, and .claude/settings.json is the project settings file that can be committed and shared. A CLAUDE.md instruction is context Claude may or may not follow, while hooks are executed by the harness every time. A PreToolUse hook fires before the edit is made, so there is nothing new to format yet. ~/.claude/settings.json applies only on one developer's machine and is not shared through the repository.",
       "reference": "https://code.claude.com/docs/en/hooks"
     },
     {
@@ -5690,92 +5690,92 @@
       "id": "CCDV-193",
       "domain": "Claude Code",
       "type": "single",
-      "question": "A team wants a CI job that runs Claude Code on each pull request to fix lint errors, parses a machine-readable result, and behaves the same on every runner regardless of hooks, plugins, or CLAUDE.md files in a runner's home directory. Which invocation best fits?",
+      "question": "A team runs Claude Code in CI on each pull request to fix lint errors and parses the result. It must behave identically on every runner, even if a runner has personal hooks, plugins, or a CLAUDE.md in its home directory, and should only use the tools the job needs. Which invocation fits?",
       "options": [
         {
           "key": "A",
-          "text": "Start an interactive claude session in the CI container and feed it the prompt through an expect script."
+          "text": "Run it non-interactively with every permission check bypassed so the job never stalls, then parse the plain-text output."
         },
         {
           "key": "B",
-          "text": "Run claude -p with --permission-mode bypassPermissions so that the job never waits on a permission prompt."
+          "text": "Run it non-interactively and add a committed CLAUDE.md telling Claude to ignore any personal hooks or plugins it finds."
         },
         {
           "key": "C",
-          "text": "Run claude --continue in each job so the pipeline reuses the previous run's context and auto-approvals."
+          "text": "Run it non-interactively in bare mode, pre-approve only the needed tools, and request JSON output for parsing."
         },
         {
           "key": "D",
-          "text": "Run claude --bare -p with --allowedTools for the needed tools and --output-format json for parseable output."
+          "text": "Continue the previous CI run's session on each job so it reuses the established context and earlier approvals."
         }
       ],
       "correct": [
-        "D"
+        "C"
       ],
-      "explanation": "The -p flag runs Claude Code non-interactively, --allowedTools pre-approves specific tools, and --output-format json returns structured results; --bare skips auto-discovery of hooks, skills, plugins, MCP servers, and CLAUDE.md so results are consistent across machines. Driving an interactive session is fragile, bypassPermissions removes safety checks rather than scoping them, and --continue reuses an earlier conversation instead of producing a clean run.",
+      "explanation": "Bare mode (--bare with -p) skips auto-discovery of hooks, skills, plugins, MCP servers, auto memory, and CLAUDE.md, which is what makes results the same on every machine; --allowedTools pre-approves just the needed tools and --output-format json returns a parseable result. Bypassing permissions removes safety checks rather than scoping tools, and without bare mode the runner's hooks and plugins still load. A CLAUDE.md instruction cannot stop hooks from executing, since hooks run in the harness. Continuing a previous session makes each run depend on earlier state instead of starting clean.",
       "reference": "https://code.claude.com/docs/en/headless"
     },
     {
       "id": "CCDV-194",
       "domain": "Claude Code",
       "type": "multi",
-      "question": "A developer plans to use Claude Code's auto mode for a long refactoring task to avoid constant permission prompts. Which TWO statements about auto mode are accurate? (Choose TWO.)",
+      "question": "A developer wants a long refactor on their laptop to run with few permission prompts, but wants protection if Claude reads a hostile file that tries to steer it into something beyond the request. Pushing to a git remote must always wait for their approval. Which TWO settings meet this? (Choose TWO.)",
       "options": [
         {
           "key": "A",
-          "text": "Auto mode skips every safety check, like bypassPermissions, so it should only be used inside isolated containers or VMs."
+          "text": "Use auto mode, where a separate classifier reviews actions and blocks those driven by hostile content."
         },
         {
           "key": "B",
-          "text": "A separate classifier model reviews actions before they run, and explicit ask rules in settings still force a permission prompt."
+          "text": "Use bypassPermissions mode on the laptop so that no action ever stops for a prompt during the long refactor."
         },
         {
           "key": "C",
-          "text": "Putting defaultMode set to auto in the committed .claude/settings.json turns auto mode on for everyone who clones the repository."
+          "text": "Use dontAsk mode so anything not pre-approved is denied, including pushes, without the developer being asked."
         },
         {
           "key": "D",
-          "text": "The thresholds for consecutive and total classifier blocks can be raised in settings so auto mode never falls back to prompting."
+          "text": "Add an ask rule matching git push commands, which still forces a permission prompt even in auto mode."
         },
         {
           "key": "E",
-          "text": "After 3 blocks in a row or 20 in total, auto mode pauses and Claude Code resumes prompting until an approval restores it."
+          "text": "Use acceptEdits mode so that file edits and every shell command, including pushes, run without any prompt."
         }
       ],
       "correct": [
-        "B",
-        "E"
+        "A",
+        "D"
       ],
-      "explanation": "In auto mode a separate classifier model reviews actions before they run, blocking actions that escalate beyond the request, target unrecognized infrastructure, or appear driven by hostile content, while explicit ask rules still force a prompt. If the classifier blocks an action 3 times in a row or 20 times total, auto mode pauses and Claude Code resumes prompting; approving the prompted action resumes auto mode. Auto mode is not bypassPermissions, which is the mode that skips all checks and is meant for isolated containers. defaultMode auto does not take effect from .claude/settings.json or .claude/settings.local.json, and the block thresholds are documented as not configurable.",
+      "explanation": "Auto mode replaces routine prompts with a classifier that blocks actions that escalate beyond the request, target unrecognized infrastructure, or appear driven by hostile content, and explicit ask rules such as one for git push still force a prompt. bypassPermissions skips all checks and is meant only for isolated containers and VMs, not a laptop. dontAsk denies pushes outright instead of asking, so the developer could never approve them. acceptEdits auto-approves file edits and common filesystem commands, but other shell commands still prompt and it adds no protection against hostile content.",
       "reference": "https://code.claude.com/docs/en/permission-modes"
     },
     {
       "id": "CCDV-195",
       "domain": "Claude Code",
       "type": "single",
-      "question": "A developer is building a dashboard that runs Claude Code headlessly with claude -p and must show Claude's text to users token by token as it is generated, then record the cost and session ID when the run finishes. Which invocation should the developer use?",
+      "question": "A developer is building a dashboard that runs Claude Code headlessly and must show Claude's text to users as it is generated, then record the run's cost and session ID when it ends. Which output approach should the developer use?",
       "options": [
         {
           "key": "A",
-          "text": "--output-format json, then read the text from the result field as each new token is written to stdout"
+          "text": "Request the single JSON result object, which already contains the response text along with the cost and session ID."
         },
         {
           "key": "B",
-          "text": "--output-format text with --verbose, which adds a JSON line with cost and session ID after the text"
+          "text": "Request streaming JSON events with partial messages, render each text delta, and read the final result event."
         },
         {
           "key": "C",
-          "text": "--input-format stream-json alone, which also switches the output to streamed newline-delimited events"
+          "text": "Use the default plain-text output, display stdout as it arrives, and estimate cost from the character count."
         },
         {
           "key": "D",
-          "text": "--output-format stream-json with --verbose and --include-partial-messages, reading text_delta events"
+          "text": "Run an interactive session in a pseudo-terminal and scrape the rendered screen for text and the cost summary."
         }
       ],
       "correct": [
-        "D"
+        "B"
       ],
-      "explanation": "In print mode, --output-format stream-json emits newline-delimited JSON events, and adding --verbose and --include-partial-messages streams partial events whose text_delta deltas carry tokens as they are generated; the last line is a result message with the final text, cost, and session metadata. The json format returns a single structured object with the result and metadata only once the run completes, so it cannot show tokens progressively. The default text format returns plain text rather than structured cost and session data. --input-format controls how input is read from stdin, not the output format.",
+      "explanation": "With --output-format stream-json plus --verbose and --include-partial-messages, claude -p emits newline-delimited events whose text deltas carry tokens as they are generated, and the last line is a result message with the final text, cost, and session metadata. The json format returns one object only after the run completes, so it cannot show text progressively. Plain-text output carries no structured cost or session data, and estimating cost from characters is inaccurate. Scraping an interactive terminal is fragile compared with the documented headless output formats.",
       "reference": "https://code.claude.com/docs/en/headless"
     },
     {
