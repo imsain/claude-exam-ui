@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CCDV-F Exam Simulator</title>
+    <link rel="icon" href="favicon.svg" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <div>
+          <h1 id="exam-name">Exam Simulator</h1>
+          <p id="exam-meta" class="muted">Loading question bank…</p>
+        </div>
+      </div>
+      <div id="score-chip" class="chip" hidden></div>
+    </header>
+
+    <p id="banner" class="banner" role="status" hidden></p>
+
+    <main>
+      <!-- Start screen -->
+      <section id="screen-start" class="screen" hidden>
+        <div id="resume-card" class="card resume" hidden>
+          <h2>You have an exam in progress</h2>
+          <p id="resume-detail" class="muted"></p>
+          <div class="row">
+            <button id="btn-resume" class="primary">Continue where you left off</button>
+            <button id="btn-discard" class="ghost">Discard and start over</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>New exam</h2>
+          <p class="muted">
+            One question at a time with immediate feedback and an explanation. Quitting is
+            always safe — progress is saved in your browser after every answer.
+          </p>
+
+          <form id="start-form" class="fields">
+            <label class="field">
+              <span>Questions</span>
+              <input id="field-count" type="number" min="1" step="1" value="53" />
+              <small class="muted">Shorter sets keep the real domain weighting.</small>
+            </label>
+
+            <label class="field">
+              <span>Domain</span>
+              <select id="field-domain"></select>
+              <small class="muted">Drill a single area, or sit the whole paper.</small>
+            </label>
+
+            <label class="field">
+              <span>Seed <em class="muted">(optional)</em></span>
+              <input id="field-seed" type="number" step="1" placeholder="e.g. 42" />
+              <small class="muted">Reproduces the exact same paper and answer order.</small>
+            </label>
+
+            <fieldset class="field toggles">
+              <span>Shuffling</span>
+              <label class="check">
+                <input id="field-shuffle-questions" type="checkbox" checked />
+                <span>Shuffle questions</span>
+              </label>
+              <label class="check">
+                <input id="field-shuffle-options" type="checkbox" checked />
+                <span>Shuffle answer choices</span>
+              </label>
+            </fieldset>
+          </form>
+
+          <div class="row">
+            <button id="btn-start" class="primary">Start exam</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Question screen -->
+      <section id="screen-question" class="screen" hidden>
+        <div class="progress-head">
+          <span id="q-counter" class="q-counter"></span>
+          <div class="track"><div id="q-progress" class="fill"></div></div>
+          <span id="q-domain" class="muted"></span>
+        </div>
+
+        <div class="card question">
+          <p id="q-text" class="q-text"></p>
+          <p id="q-multi" class="multi-hint" hidden></p>
+          <div id="q-options" class="options"></div>
+
+          <div id="q-actions" class="row">
+            <button id="btn-submit" class="primary" disabled>Submit answer</button>
+            <button id="btn-skip" class="ghost">Skip <kbd>S</kbd></button>
+            <button id="btn-quit" class="ghost danger">Quit &amp; save <kbd>Q</kbd></button>
+          </div>
+
+          <div id="feedback" class="feedback" hidden>
+            <p id="fb-verdict" class="verdict"></p>
+            <p class="fb-line"><strong>Answer:</strong> <span id="fb-answer"></span></p>
+            <p class="fb-line"><strong>Why:</strong> <span id="fb-why"></span></p>
+            <p class="fb-line"><a id="fb-docs" href="#" target="_blank" rel="noreferrer">Claude documentation</a></p>
+            <div class="row">
+              <button id="btn-next" class="primary">Next question <kbd>↵</kbd></button>
+            </div>
+          </div>
+        </div>
+
+        <p class="hint muted">
+          Keyboard: <kbd>A</kbd>–<kbd>H</kbd> to choose, <kbd>↵</kbd> to submit and advance,
+          <kbd>S</kbd> to skip, <kbd>Q</kbd> to stop and save.
+        </p>
+      </section>
+
+      <!-- Summary screen -->
+      <section id="screen-summary" class="screen" hidden>
+        <div class="card summary">
+          <div class="verdict-row">
+            <span id="sum-verdict" class="badge"></span>
+            <div>
+              <p id="sum-score" class="big"></p>
+              <p id="sum-scaled" class="muted"></p>
+            </div>
+          </div>
+
+          <dl id="sum-stats" class="stats"></dl>
+
+          <h3>By domain</h3>
+          <div id="sum-domains" class="domains"></div>
+
+          <div id="sum-review-wrap" hidden>
+            <h3>Review these</h3>
+            <div id="sum-review" class="review"></div>
+          </div>
+
+          <div class="row">
+            <button id="btn-continue" class="primary" hidden>Continue exam</button>
+            <button id="btn-download" class="ghost">Download results (JSON)</button>
+            <button id="btn-restart" class="ghost">Back to start</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="app.js" type="module"></script>
+  </body>
+</html>

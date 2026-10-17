@@ -1,0 +1,7 @@
+node_modules/
+results/
+.exam-session.json
+.exam-session.json.*
+*.log
+.DS_Store
+.screenshots/

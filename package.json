@@ -1,0 +1,31 @@
+{
+  "name": "claude-ccdv-exam-simulator",
+  "version": "1.0.0",
+  "description": "Interactive CLI simulator for the Claude Certified Developer - Foundations (CCDV-F) exam",
+  "type": "module",
+  "engines": {
+    "node": ">=22.6.0"
+  },
+  "scripts": {
+    "start": "node src/index.ts",
+    "exam": "node src/index.ts",
+    "quick": "node src/index.ts --count 20",
+    "web": "node src/server.ts",
+    "typecheck": "tsc --noEmit",
+    "validate": "node src/validate.ts"
+  },
+  "keywords": [
+    "claude",
+    "anthropic",
+    "certification",
+    "ccdv-f",
+    "exam",
+    "quiz",
+    "cli"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "typescript": "^5.9.3"
+  }
+}
