@@ -4460,7 +4460,7 @@
       "correct": [
         "C"
       ],
-      "explanation": "For long documents, Anthropic recommends asking Claude to extract direct quotes first and then base its analysis on them, together with explicit permission to say the information is not there. That grounds every claim in text a reviewer can check. A low temperature makes output more conservative but does not stop the model from asserting things the document lacks. Fine-tuning on past summaries teaches style, not faithfulness to a new contract, and summarizing one-page chunks in isolation loses the cross-references that liability and termination terms depend on.",
+      "explanation": "For long documents, Anthropic recommends asking Claude to extract direct quotes first and then base its analysis on them, together with explicit permission to say the information is not there. That grounds every claim in text a reviewer can check. API version 2026-10-21 removes the temperature parameter, and even on older versions a low temperature only makes phrasing more conservative; it does not stop the model from asserting things the document lacks. Fine-tuning on past summaries teaches style, not faithfulness to a new contract, and summarizing one-page chunks in isolation loses the cross-references that liability and termination terms depend on.",
       "reference": "https://platform.claude.com/docs/en/test-and-evaluate/strengthen-guardrails/reduce-hallucinations"
     },
     {
@@ -4610,8 +4610,8 @@
         "A",
         "D"
       ],
-      "explanation": "The API documentation states that results are not fully deterministic even at temperature 0, so an audit trail has to keep the actual output rather than expect to reproduce it later. The model also cannot know about events after its training cutoff unless they are provided in context. Citations make claims checkable, but the claim drawn from a cited passage can still be wrong, so verification is still needed. Instructions not to reveal a prompt are soft controls that determined users can sometimes get around, and a long context does not mean every part of the input is used equally well.",
-      "reference": "https://platform.claude.com/docs/en/api/messages"
+      "explanation": "Anthropic's glossary states that identical inputs might produce different outputs across API calls, even with temperature set to 0, so an audit trail has to keep the actual output rather than expect to reproduce it later. The model also cannot know about events after its training cutoff unless they are provided in context. Citations make claims checkable, but the claim drawn from a cited passage can still be wrong, so verification is still needed. Instructions not to reveal a prompt are soft controls that determined users can sometimes get around, and a long context does not mean every part of the input is used equally well.",
+      "reference": "https://platform.claude.com/docs/en/about-claude/glossary"
     },
     {
       "id": "CCARP-156",

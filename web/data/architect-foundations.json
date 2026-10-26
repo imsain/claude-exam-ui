@@ -3979,7 +3979,7 @@
       "correct": [
         "D"
       ],
-      "explanation": "Inconsistent labels mean the model has no shared definition of each level, so it improvises. Explicit criteria per level, anchored by concrete code examples, give it a stable reference for classification. Collapsing to two levels (A) keeps the same undefined boundary and loses information teams use. A justification (B) explains an arbitrary choice without constraining it. Temperature (C) may reduce run-to-run variation on identical input but does nothing for similar defects in different code, which is the actual inconsistency.",
+      "explanation": "Inconsistent labels mean the model has no shared definition of each level, so it improvises. Explicit criteria per level, anchored by concrete code examples, give it a stable reference for classification. Collapsing to two levels (A) keeps the same undefined boundary and loses information teams use. A justification (B) explains an arbitrary choice without constraining it. Temperature (C) is not available to tune: Claude 4.7 and later models accept only the default, and on older models it would at most steady repeat runs on identical input, not labels for similar defects in different code, which is the actual inconsistency.",
       "reference": "https://code.claude.com/docs/en/code-review-customize"
     },
     {

@@ -1365,7 +1365,7 @@
       "correct": [
         "D"
       ],
-      "explanation": "The SDK accepts a base_url (or the ANTHROPIC_BASE_URL environment variable), so unit tests can run against a stub that returns fixed responses and stay deterministic, fast, and free. Model quality belongs in evals with automated grading over many examples. Claude 4.7 and later models return a 400 error for a non-default temperature, and even where it is allowed, setting it doesn't make exact strings reproducible. Retrying until a match appears hides real failures. Asserting against production traffic is not a unit test.",
+      "explanation": "The SDK accepts a base_url (or the ANTHROPIC_BASE_URL environment variable), so unit tests can run against a stub that returns fixed responses and stay deterministic, fast, and free. Model quality belongs in evals with automated grading over many examples. API version 2026-10-21, which current SDKs send by default, removes temperature, so a request that sets it returns a 400 error on every model, and even on older versions where temperature 0 is accepted, outputs are not fully deterministic. Retrying until a match appears hides real failures. Asserting against production traffic is not a unit test.",
       "reference": "https://platform.claude.com/docs/en/cli-sdks-libraries/sdks/python"
     },
     {
@@ -2267,30 +2267,30 @@
       "id": "CCDV-077",
       "domain": "Model Selection and Optimization",
       "type": "single",
-      "question": "A team's regression tests call a Claude model that accepts the temperature parameter, set temperature to 0, and assert that the output exactly matches a stored string. The tests fail intermittently. What is the most likely explanation?",
+      "question": "A team's regression tests call Claude with the SDK's default API version, 2026-10-21, and assert that each output exactly matches a stored string. The tests fail intermittently, and an engineer proposes adding temperature: 0 to every request so the strings become reproducible. What should the team do?",
       "options": [
         {
           "key": "A",
-          "text": "Temperature 0 applies only to the first token, and later tokens are sampled randomly."
+          "text": "Add temperature: 0 to each request, since a zero temperature makes every call return identical text"
         },
         {
           "key": "B",
-          "text": "The API caches outputs for identical inputs, and that cache has expired."
+          "text": "Keep the exact-match assertions and retry each failing test until the stored string comes back"
         },
         {
           "key": "C",
-          "text": "Temperature 0 makes the model choose randomly among its top candidate tokens."
+          "text": "Assert on structure or meaning, since identical inputs can produce different outputs"
         },
         {
           "key": "D",
-          "text": "Even at temperature 0, outputs are not fully deterministic across API calls."
+          "text": "Pin the requests to an older anthropic-version so the API replays a cached output for each input"
         }
       ],
       "correct": [
-        "D"
+        "C"
       ],
-      "explanation": "Anthropic's glossary says that even with temperature set to 0, results are not fully deterministic, and identical inputs can produce different outputs across API calls. Tests should therefore check structure or meaning rather than exact strings. Temperature applies to every sampled token, the API does not cache outputs this way, and lower temperature makes sampling more conservative, not more random.",
-      "reference": "https://platform.claude.com/docs/en/about-claude/glossary"
+      "explanation": "API version 2026-10-21 removes the temperature, top_p and top_k parameters, and a request that sends any of them returns a 400 error on every model, so the proposed change would break every test. Even on the older 2023-06-01 version, where some models accept temperature 0, Anthropic's glossary says results are not fully deterministic and identical inputs might produce different outputs across API calls. Tests should therefore check structure or meaning rather than exact strings. Retrying until the string matches hides real regressions, and no API version caches and replays outputs.",
+      "reference": "https://platform.claude.com/docs/en/api/versioning"
     },
     {
       "id": "CCDV-078",
