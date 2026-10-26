@@ -1,7 +1,15 @@
-# Claude Certified Developer – Foundations (CCDV-F) Exam Simulator
+# Claude Certification Exam Simulator
 
-An interactive TypeScript CLI that runs a 53-question practice exam (the length of the real
-CCDV-F) drawn from a bank of 200 questions. It asks one question at a time, tells you immediately whether you were right,
+Practice exams for three Claude certifications, each with its own bank of 200 questions:
+
+| Practice set | Exam code | Real exam length | Set id |
+| --- | --- | --- | --- |
+| Claude – Developer Foundations | CCDV-F | 53 items | `developer-foundations` (default) |
+| Claude – Architect Foundations | CCAR-F | 60 items | `architect-foundations` |
+| Claude – Architect Professional | CCAR-P | 63 items | `architect-professional` |
+
+An interactive TypeScript CLI (and a matching browser app) runs a practice exam the length
+of the real one, drawn from the chosen set's bank. It asks one question at a time, tells you immediately whether you were right,
 explains why the correct answer is correct (and why the distractors are wrong), keeps a
 running score, and writes the whole sitting — every question, your answer, and the
 explanation — to a JSON file. You can quit at any point and pick up exactly where you
@@ -47,6 +55,7 @@ npm run web     # or sit it in the browser: http://localhost:5173
 
 ```bash
 npm start                              # 53-question exam sampled from the bank of 200
+npm start -- --set architect-foundations  # sit a different practice set
 npm start -- --count 200               # work through the entire bank
 npm start -- --count 20                # a shorter set, weighted like the real exam
 npm start -- --domain agents           # drill one domain
@@ -60,15 +69,16 @@ npm start -- --help                    # all options
 
 | Option | Description |
 | --- | --- |
-| `-n, --count <n>` | How many questions to ask (default 53) |
-| `-d, --domain <name>` | `apps`, `models`, `agents`, `prompt`, `tools`, `security`, `code`, or `eval` |
+| `-s, --set <id>` | Practice set: `developer-foundations` (default), `architect-foundations`, `architect-professional` |
+| `-n, --count <n>` | How many questions to ask (default: the real exam's length — 53, 60 or 63) |
+| `-d, --domain <name>` | A domain name or a unique part of it (e.g. `"tool design"`); Developer also accepts `apps`, `models`, `agents`, `prompt`, `tools`, `security`, `code`, `eval` |
 | `--seed <n>` | Reproduce the same question and option order |
 | `--no-shuffle` | Ask questions and options in bank order |
 | `--no-shuffle-options` | Shuffle questions but keep answer choices in order |
 | `--fast` | Do not wait for Enter after each explanation |
 | `-r, --resume` | Continue saved progress without the confirmation prompt |
 | `--new` | Start a new exam and discard saved progress |
-| `--session <file>` | Where progress is saved (default `.exam-session.json`) |
+| `--session <file>` | Where progress is saved (default `.exam-session.json`, or `.exam-session-<set>.json` for the Architect sets) |
 | `-o, --out <file>` | Results file (default `results/exam-<timestamp>.json`) |
 | `--bank <file>` | Use a different question bank |
 
@@ -85,6 +95,11 @@ npm run web                     # http://localhost:5173
 npm run web -- --port 5174      # or set PORT=5174
 ```
 
+The dropdown in the top-left title bar switches between the practice sets. Each set keeps
+its own saved progress, so you can leave an exam half-finished in one set, switch, and come
+back to it later. The choice is remembered and also shows in the URL (`?set=architect-foundations`),
+so a link can open a specific set.
+
 The page covers the whole exam flow: pick the number of questions, a single domain, a seed
 and the shuffle toggles on the start screen; answer one question at a time with the same
 immediate feedback, explanation and running score; skip, or quit and save. Finishing shows
@@ -97,8 +112,8 @@ to choose (press several letters for "choose TWO" questions), <kbd>Enter</kbd> t
 then to advance, <kbd>S</kbd> to skip, <kbd>Q</kbd> to stop and save.
 
 The browser build is fully static: the exam engine (selection, shuffling, grading, results)
-runs in the page, the question bank is fetched from `web/data/questions.json` (next to the
-page itself), and progress is kept in the browser's `localStorage`, so a half-finished exam
+runs in the page, the practice sets are listed in `web/data/sets.json` and each bank is fetched
+from `web/data/` (next to the page itself), and progress is kept in the browser's `localStorage`, so a half-finished exam
 survives closing the tab and reloads on the same machine. There are no server-side writes,
 which is what makes the same page deployable to any static host.
 
@@ -148,8 +163,11 @@ scaled score with 720 as the pass mark (72%).
 
 ## Question bank
 
-`web/data/questions.json` holds all 200 questions and their explanations, weighted to the
-published CCDV-F domains:
+Each practice set is one JSON file in `web/data/`, listed in `web/data/sets.json`. Every bank
+has 200 questions weighted to its exam guide's published domain weights, and records the
+real exam's length (`examItems`) and its domains in blueprint order (`domains`).
+
+`web/data/questions.json` — Developer Foundations (CCDV-F):
 
 | Domain | Questions | Exam weight |
 | --- | --- | --- |
@@ -162,7 +180,30 @@ published CCDV-F domains:
 | Claude Code | 6 | 3.1% |
 | Eval, Testing, and Debugging | 5 | 2.6% |
 
-A default run asks 53 of the 200, sampled per domain so the weighting above is preserved
+`web/data/architect-foundations.json` — Architect Foundations (CCAR-F). Questions are framed
+by the six scenarios in the exam guide (e.g. "Scenario: Customer Support Resolution Agent."):
+
+| Domain | Questions | Exam weight |
+| --- | --- | --- |
+| Agentic Architecture & Orchestration | 54 | 27% |
+| Tool Design & MCP Integration | 36 | 18% |
+| Claude Code Configuration & Workflows | 40 | 20% |
+| Prompt Engineering & Structured Output | 40 | 20% |
+| Context Management & Reliability | 30 | 15% |
+
+`web/data/architect-professional.json` — Architect Professional (CCAR-P):
+
+| Domain | Questions | Exam weight |
+| --- | --- | --- |
+| Solution Design & Architecture | 34 | 17% |
+| Claude Models, Prompting & Context Engineering | 26 | 13% |
+| Integration | 38 | 19% |
+| Evaluation, Testing & Optimization | 32 | 16% |
+| Governance, Safety & Risk Management | 28 | 14% |
+| Stakeholder Communication & Lifecycle Management | 28 | 14% |
+| Developer Productivity & Operational Enablement | 14 | 7% |
+
+A default Developer run asks 53 of the 200 (Architect: 60 or 63), sampled per domain so the weighting above is preserved
 exactly, which means consecutive attempts cover different questions. Use `--count 200` to
 work through the entire bank in one sitting.
 
@@ -185,7 +226,7 @@ Add your own questions by appending objects to the array — use `"type": "multi
 or more entries in `correct` for "choose TWO" style questions. Then check the file:
 
 ```bash
-npm run validate    # verifies every question and prints the domain weighting
+npm run validate    # verifies every bank in sets.json and prints each domain weighting
 ```
 
 ## Results file
@@ -223,7 +264,8 @@ sheet — reread the entries in `missedQuestionIds`, then run
 ## Project layout
 
 ```
-web/data/questions.json  the 200 questions, answers, and explanations (part of web/)
+web/data/sets.json     the practice sets shown in the picker and accepted by --set
+web/data/*.json        one 200-question bank per set (questions.json is Developer Foundations)
 src/index.ts           CLI entry point, argument parsing, resume handling
 src/exam.ts            question loop, feedback, running score
 src/server.ts          local web server (npm run web)

@@ -1,10 +1,10 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
-import { DOMAINS, type Domain, type DomainScore, type ExamResult, type QuestionBank } from "./types.ts";
+import { type Domain, type DomainScore, type ExamResult, type QuestionBank } from "./types.ts";
 import type { ExamRun } from "./exam.ts";
 import { CHECK, CROSS, bold, dim, green, heading, progressBar, red, rule, wrapText, yellow } from "./ui.ts";
 
-/** Anthropic reports CCDV-F on a 100–1000 scale with 720 to pass. */
+/** Anthropic reports these exams on a 100–1000 scale with 720 to pass. */
 function toScaledScore(percent: number): number {
   return Math.round(100 + (percent / 100) * 900);
 }
@@ -25,7 +25,7 @@ export function buildResult(bank: QuestionBank, run: ExamRun, context: ResultCon
   const denominator = run.completed ? questionsInExam : answers.length || 1;
   const scorePercent = Math.round((correct / denominator) * 1000) / 10;
 
-  const domainBreakdown: DomainScore[] = DOMAINS.map((domain) => {
+  const domainBreakdown: DomainScore[] = bank.domains.map((domain) => {
     const inDomain = answers.filter((answer) => answer.domain === domain);
     const domainCorrect = inDomain.filter((answer) => answer.status === "correct").length;
     return {

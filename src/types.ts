@@ -1,17 +1,14 @@
 /** Shapes shared by the question bank, the exam loop and the saved result file. */
 
-export const DOMAINS = [
-  "Applications and Integration",
-  "Model Selection and Optimization",
-  "Agents and Workflows",
-  "Prompt and Context Engineering",
-  "Tools and MCPs",
-  "Security and Safety",
-  "Claude Code",
-  "Eval, Testing, and Debugging",
-] as const;
+/** Domain names come from each bank's `domains` list, so every practice set can have its own. */
+export type Domain = string;
 
-export type Domain = (typeof DOMAINS)[number];
+/** One entry of web/data/sets.json: a practice set and the bank file that holds it. */
+export interface PracticeSet {
+  id: string;
+  label: string;
+  file: string;
+}
 
 /** `multi` questions require every correct option and nothing else to be selected. */
 export type QuestionType = "single" | "multi";
@@ -36,6 +33,10 @@ export interface QuestionBank {
   exam: string;
   examCode: string;
   passingScorePercent: number;
+  /** Items on the real exam; the default length of a full sitting. */
+  examItems: number;
+  /** Domains in blueprint order; every question's domain must be one of these. */
+  domains: Domain[];
   questions: Question[];
 }
 

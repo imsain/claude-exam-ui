@@ -22,7 +22,7 @@ import {
   questionsRemaining,
   saveSession,
 } from "./session.ts";
-import { DOMAINS, type Domain, type ExamResult, type Question, type QuestionBank } from "./types.ts";
+import { type Domain, type ExamResult, type Question, type QuestionBank } from "./types.ts";
 import { bold, dim, green, red, yellow } from "./ui.ts";
 
 const WEB_ROOT = join(PROJECT_ROOT, "web");
@@ -112,7 +112,7 @@ function bankMeta() {
     examCode: bank.examCode,
     passingScorePercent: bank.passingScorePercent,
     totalQuestions: bank.questions.length,
-    domains: DOMAINS.map((domain) => ({
+    domains: bank.domains.map((domain) => ({
       name: domain,
       count: bank.questions.filter((question) => question.domain === domain).length,
     })).filter((entry) => entry.count > 0),
@@ -187,7 +187,7 @@ function requireLive(): Live {
 function asDomain(value: unknown): Domain | undefined {
   if (value === undefined || value === null || value === "") return undefined;
   const wanted = String(value).toLowerCase();
-  const match = DOMAINS.find((domain) => domain.toLowerCase() === wanted);
+  const match = bank.domains.find((domain) => domain.toLowerCase() === wanted);
   if (!match) throw new HttpError(400, `Unknown domain "${String(value)}".`);
   return match;
 }

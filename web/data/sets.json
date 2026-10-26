@@ -1,0 +1,5 @@
+[
+  { "id": "developer-foundations", "label": "Claude – Developer Foundations", "file": "questions.json" },
+  { "id": "architect-foundations", "label": "Claude – Architect Foundations", "file": "architect-foundations.json" },
+  { "id": "architect-professional", "label": "Claude – Architect Professional", "file": "architect-professional.json" }
+]

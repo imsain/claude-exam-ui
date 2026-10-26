@@ -1,11 +1,21 @@
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import { DOMAINS, type Domain, type Question, type QuestionBank } from "./types.ts";
+import type { Domain, PracticeSet, Question, QuestionBank } from "./types.ts";
 
 const projectRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
-export const BANK_PATH = join(projectRoot, "web", "data", "questions.json");
+const DATA_DIR = join(projectRoot, "web", "data");
+export const BANK_PATH = join(DATA_DIR, "questions.json");
 export const PROJECT_ROOT = projectRoot;
+
+/** The practice sets listed in web/data/sets.json; the first one is the default. */
+export async function loadSets(): Promise<PracticeSet[]> {
+  return JSON.parse(await readFile(join(DATA_DIR, "sets.json"), "utf8")) as PracticeSet[];
+}
+
+export function bankPathOf(set: PracticeSet): string {
+  return join(DATA_DIR, set.file);
+}
 
 export async function loadBank(path: string = BANK_PATH): Promise<QuestionBank> {
   let raw: string;
@@ -38,6 +48,10 @@ export function validateBank(bank: QuestionBank): string[] {
     return ["no questions found"];
   }
 
+  if (!Array.isArray(bank.domains) || bank.domains.length === 0) problems.push("bank has no domains list");
+  if (!Number.isInteger(bank.examItems) || bank.examItems < 1) problems.push("bank has no examItems count");
+  const domains = bank.domains ?? [];
+
   const seenIds = new Set<string>();
   for (const [index, question] of bank.questions.entries()) {
     const label = question?.id ?? `question at index ${index}`;
@@ -46,7 +60,7 @@ export function validateBank(bank: QuestionBank): string[] {
     if (seenIds.has(question.id)) problems.push(`${label}: duplicate id`);
     seenIds.add(question.id);
 
-    if (!DOMAINS.includes(question.domain)) {
+    if (!domains.includes(question.domain)) {
       problems.push(`${label}: unknown domain "${question.domain}"`);
     }
     if (!question.question?.trim()) problems.push(`${label}: missing question text`);

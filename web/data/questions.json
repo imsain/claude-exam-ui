@@ -2,6 +2,17 @@
   "exam": "Claude Certified Developer - Foundations",
   "examCode": "CCDV-F",
   "passingScorePercent": 72,
+  "examItems": 53,
+  "domains": [
+    "Applications and Integration",
+    "Model Selection and Optimization",
+    "Agents and Workflows",
+    "Prompt and Context Engineering",
+    "Tools and MCPs",
+    "Security and Safety",
+    "Claude Code",
+    "Eval, Testing, and Debugging"
+  ],
   "questions": [
     {
       "id": "CCDV-001",

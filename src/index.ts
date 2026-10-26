@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { BANK_PATH, PROJECT_ROOT, loadBank, selectQuestions } from "./bank.ts";
+import { PROJECT_ROOT, bankPathOf, loadBank, loadSets, selectQuestions } from "./bank.ts";
 import { type ResumeState, runExam } from "./exam.ts";
 import { Prompt } from "./prompt.ts";
 import { buildResult, printSummary, saveResult, timestampedResultPath } from "./report.ts";
@@ -13,22 +13,24 @@ import {
   questionsRemaining,
   saveSession,
 } from "./session.ts";
-import { DOMAINS, type AnsweredQuestion, type Domain, type Question } from "./types.ts";
+import type { AnsweredQuestion, Domain, PracticeSet, Question, QuestionBank } from "./types.ts";
 import { bold, dim, green, red, yellow } from "./ui.ts";
 
 interface Cli {
-  count: number;
-  domain?: Domain;
+  count?: number;
+  domain?: string;
+  set?: string;
   shuffleQuestions: boolean;
   shuffleOptions: boolean;
   seed?: number;
   out?: string;
-  bank: string;
+  bank?: string;
   reviewPause: boolean;
-  session: string;
+  session?: string;
   resume: "ask" | "always" | "never";
 }
 
+/** Short names for the Developer – Foundations domains; other sets match by name. */
 const DOMAIN_ALIASES: Record<string, Domain> = {
   apps: "Applications and Integration",
   api: "Applications and Integration",
@@ -49,12 +51,9 @@ const DOMAIN_ALIASES: Record<string, Domain> = {
 
 function parseArgs(argv: readonly string[]): Cli | "help" {
   const cli: Cli = {
-    count: 53,
     shuffleQuestions: true,
     shuffleOptions: true,
-    bank: BANK_PATH,
     reviewPause: true,
-    session: defaultSessionPath(PROJECT_ROOT),
     resume: "ask",
   };
 
@@ -78,19 +77,13 @@ function parseArgs(argv: readonly string[]): Cli | "help" {
         break;
       }
       case "-d":
-      case "--domain": {
-        const raw = value();
-        const domain =
-          DOMAIN_ALIASES[raw.toLowerCase()] ??
-          DOMAINS.find((candidate) => candidate.toLowerCase() === raw.toLowerCase());
-        if (!domain) {
-          throw new Error(
-            `Unknown domain "${raw}". Try one of: apps, models, agents, prompt, tools, security, code, eval`,
-          );
-        }
-        cli.domain = domain;
+      case "--domain":
+        cli.domain = value();
         break;
-      }
+      case "-s":
+      case "--set":
+        cli.set = value();
+        break;
       case "--seed": {
         const parsed = Number(value());
         if (!Number.isInteger(parsed)) throw new Error("--seed must be an integer");
@@ -133,25 +126,41 @@ function parseArgs(argv: readonly string[]): Cli | "help" {
   return cli;
 }
 
-function printHelp(): void {
+/** Matches a --domain value against the bank: Developer aliases, the full name, or a unique part of it. */
+function resolveDomain(raw: string, bank: QuestionBank): Domain {
+  const wanted = raw.toLowerCase();
+  const alias = DOMAIN_ALIASES[wanted];
+  if (alias && bank.domains.includes(alias)) return alias;
+  const exact = bank.domains.find((domain) => domain.toLowerCase() === wanted);
+  if (exact) return exact;
+  const partial = bank.domains.filter((domain) => domain.toLowerCase().includes(wanted));
+  if (partial.length === 1) return partial[0] as Domain;
+  throw new Error(`Unknown domain "${raw}" for ${bank.examCode}. Try one of:\n  ${bank.domains.join("\n  ")}`);
+}
+
+function printHelp(sets: readonly PracticeSet[]): void {
   console.log(`
-${bold("Claude Certified Developer - Foundations (CCDV-F) exam simulator")}
+${bold("Claude certification exam simulator")}
 
 ${bold("Usage")}
-  npm start                     Run a full 53-question exam
+  npm start                     Run a full exam from the default practice set
   npm start -- [options]
 
 ${bold("Options")}
-  -n, --count <n>          Number of questions to ask (default 53)
-  -d, --domain <name>      Drill one domain: apps | models | agents | prompt |
-                           tools | security | code | eval
+  -s, --set <id>           Practice set (default ${sets[0]?.id}):
+${sets.map((set) => `                           ${set.id.padEnd(24)} ${dim(set.label)}`).join("\n")}
+  -n, --count <n>          Number of questions to ask (default: the real exam's length)
+  -d, --domain <name>      Drill one domain, by name or a unique part of it
+                           (Developer also accepts apps | models | agents | prompt |
+                           tools | security | code | eval)
       --seed <n>           Reproduce an exact question order
       --no-shuffle         Ask questions and options in bank order
       --no-shuffle-options Keep answer choices in bank order
       --fast               Do not wait for Enter between questions
   -r, --resume             Continue saved progress without asking
       --new                Start a new exam and discard saved progress
-      --session <file>     Where progress is saved (default .exam-session.json)
+      --session <file>     Where progress is saved (default .exam-session.json,
+                           or .exam-session-<set>.json for the other sets)
   -o, --out <file>         Where to write the results JSON
                            (default results/exam-<timestamp>.json)
       --bank <file>        Use a different question bank
@@ -170,23 +179,38 @@ ${bold("Picking up later")}
 }
 
 async function main(): Promise<void> {
+  const sets = await loadSets();
   let cli: Cli | "help";
   try {
     cli = parseArgs(process.argv.slice(2));
   } catch (error) {
     console.error(red(`\n${(error as Error).message}\n`));
-    printHelp();
+    printHelp(sets);
     process.exitCode = 1;
     return;
   }
 
   if (cli === "help") {
-    printHelp();
+    printHelp(sets);
     return;
   }
 
+  const set = cli.set === undefined ? sets[0] : sets.find((candidate) => candidate.id === cli.set);
+  if (set === undefined) {
+    throw new Error(`Unknown practice set "${cli.set}". Try one of: ${sets.map((entry) => entry.id).join(", ")}`);
+  }
+  const isDefaultSet = set === sets[0];
+  cli.bank ??= bankPathOf(set);
+  // Each set keeps its own saved progress, so switching sets never resumes the wrong paper.
+  cli.session ??= isDefaultSet
+    ? defaultSessionPath(PROJECT_ROOT)
+    : defaultSessionPath(PROJECT_ROOT).replace(/\.json$/, `-${set.id}.json`);
+
   const bank = await loadBank(cli.bank);
-  const saved = await findResumableSession(cli);
+  const domain = cli.domain === undefined ? undefined : resolveDomain(cli.domain, bank);
+  const count = cli.count ?? bank.examItems;
+  const session = cli.session;
+  const saved = await findResumableSession(session);
   const prompt = new Prompt();
 
   try {
@@ -196,20 +220,28 @@ async function main(): Promise<void> {
       if (wanted) resumed = saved;
     }
     if (saved !== null && resumed === null) {
-      await clearSession(cli.session);
+      await clearSession(session);
       console.log(dim("Saved progress discarded — starting a new exam.\n"));
     }
 
-    const questions: Question[] = resumed?.questions ?? selectQuestions(bank, cli);
+    const questions: Question[] =
+      resumed?.questions ??
+      selectQuestions(bank, {
+        count,
+        domain,
+        seed: cli.seed,
+        shuffleQuestions: cli.shuffleQuestions,
+        shuffleOptions: cli.shuffleOptions,
+      });
     const sittings = (resumed?.sittings ?? 0) + 1;
     const outPath = cli.out ?? resumed?.outPath ?? null;
     const startedAt = resumed ? new Date(resumed.startedAt) : new Date();
 
-    if (resumed === null && questions.length < cli.count) {
+    if (resumed === null && questions.length < count) {
       console.log(
         yellow(
           `\nOnly ${questions.length} question${questions.length === 1 ? "" : "s"} available` +
-            `${cli.domain ? ` in ${cli.domain}` : ""} — running with those.`,
+            `${domain ? ` in ${domain}` : ""} — running with those.`,
         ),
       );
     }
@@ -226,7 +258,7 @@ async function main(): Promise<void> {
       startedAt: startedAt.toISOString(),
       elapsedSeconds,
       sittings,
-      bankPath: cli.bank,
+      bankPath: cli.bank as string,
       outPath,
       questions,
       answers: [...answers],
@@ -237,7 +269,7 @@ async function main(): Promise<void> {
       resumeFrom,
       onProgress: async ({ answers, elapsedSeconds }) => {
         if (answers.length < questions.length) {
-          await saveSession(snapshot(answers, elapsedSeconds), cli.session);
+          await saveSession(snapshot(answers, elapsedSeconds), session);
         }
       },
     });
@@ -250,29 +282,29 @@ async function main(): Promise<void> {
     const result = buildResult(bank, run, { questionsInExam: questions.length, sittings });
 
     if (run.completed) {
-      await clearSession(cli.session);
+      await clearSession(session);
       const resultPath = outPath ?? timestampedResultPath(PROJECT_ROOT);
       await saveResult(result, resultPath);
       printSummary(result, { savedTo: resultPath });
       return;
     }
 
-    await saveSession(snapshot(run.answers, run.elapsedSeconds), cli.session);
+    await saveSession(snapshot(run.answers, run.elapsedSeconds), session);
     if (cli.out) await saveResult(result, cli.out);
     printSummary(result, {
       savedTo: cli.out ?? null,
-      resumeHint: `Progress saved. Run ${bold("npm start")} again to continue from question ${run.answers.length + 1}.`,
+      resumeHint: `Progress saved. Run ${bold(isDefaultSet ? "npm start" : `npm start -- --set ${set.id}`)} again to continue from question ${run.answers.length + 1}.`,
     });
   } finally {
     prompt.close();
   }
 }
 
-async function findResumableSession(cli: Cli): Promise<SavedSession | null> {
-  const lookup = await loadSession(cli.session);
+async function findResumableSession(sessionPath: string): Promise<SavedSession | null> {
+  const lookup = await loadSession(sessionPath);
 
   if (lookup.status === "invalid") {
-    const movedTo = await quarantineSession(cli.session);
+    const movedTo = await quarantineSession(sessionPath);
     console.log(
       yellow(
         `Saved progress could not be read (${lookup.reason})` +
@@ -284,7 +316,7 @@ async function findResumableSession(cli: Cli): Promise<SavedSession | null> {
   if (lookup.status === "none") return null;
 
   if (questionsRemaining(lookup.session) === 0) {
-    await clearSession(cli.session);
+    await clearSession(sessionPath);
     return null;
   }
 

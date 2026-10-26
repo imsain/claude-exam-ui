@@ -1,24 +1,15 @@
 /**
- * Claude Certified Developer – Foundations (CCDV-F) Exam Simulator — static browser build.
+ * Claude certification exam simulator — static browser build.
  *
  * The exam engine (question selection, shuffling, grading, results) is ported
  * from src/ and runs entirely in the browser; progress is kept in localStorage.
  * That means the app has no server and can be hosted on any static host
- * (GitHub Pages, Render, Netlify, ...). The question bank is fetched from
- * data/questions.json next to the page.
+ * (GitHub Pages, Render, Netlify, ...). The practice sets are listed in
+ * data/sets.json, and each set's question bank sits next to it in data/.
  */
 
 const STORAGE_KEY = "claude-exam-ui:draft:v1";
-const DOMAINS = [
-  "Applications and Integration",
-  "Model Selection and Optimization",
-  "Agents and Workflows",
-  "Prompt and Context Engineering",
-  "Tools and MCPs",
-  "Security and Safety",
-  "Claude Code",
-  "Eval, Testing, and Debugging",
-];
+const SET_KEY = "claude-exam-ui:set";
 
 const NUMBER_WORD = ["zero", "one", "TWO", "THREE", "FOUR", "FIVE"];
 
@@ -31,6 +22,8 @@ const screens = {
 };
 
 /** Current question plus the keys picked so far; `null` between questions. */
+let sets = [];
+let activeSet = null;
 let bank = null;
 let live = null; // the session in progress (also persisted to localStorage)
 let current = null;
@@ -170,7 +163,7 @@ function buildResult(completed) {
   const denominator = completed ? live.questions.length : answers.length || 1;
   const scorePercent = Math.round((correct / denominator) * 1000) / 10;
 
-  const domainBreakdown = DOMAINS.map((domain) => {
+  const domainBreakdown = bank.domains.map((domain) => {
     const inDomain = answers.filter((answer) => answer.domain === domain);
     const domainCorrect = inDomain.filter((answer) => answer.status === "correct").length;
     return {
@@ -214,17 +207,22 @@ function elapsedOf() {
   return live.elapsedSeconds + Math.round((Date.now() - live.sittingStartedAt) / 1000);
 }
 
+/** Each set saves its own draft; the first set keeps the original key so older drafts still resume. */
+function draftKey() {
+  return activeSet === sets[0] ? STORAGE_KEY : `${STORAGE_KEY}:${activeSet.id}`;
+}
+
 function persist() {
   if (live === null) return;
   live.savedAt = new Date().toISOString();
   live.elapsedSeconds = elapsedOf();
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(live));
+  localStorage.setItem(draftKey(), JSON.stringify(live));
 }
 
 function loadDraft() {
   let raw;
   try {
-    raw = localStorage.getItem(STORAGE_KEY);
+    raw = localStorage.getItem(draftKey());
   } catch {
     return null;
   }
@@ -248,7 +246,7 @@ function loadDraft() {
 
 function clearDraft() {
   try {
-    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(draftKey());
   } catch {
     /* storage unavailable — nothing to clear */
   }
@@ -295,7 +293,7 @@ function bankMeta() {
     examCode: bank.examCode,
     passingScorePercent: bank.passingScorePercent,
     totalQuestions: bank.questions.length,
-    domains: DOMAINS.map((domain) => ({
+    domains: bank.domains.map((domain) => ({
       name: domain,
       count: bank.questions.filter((question) => question.domain === domain).length,
     })).filter((entry) => entry.count > 0),
@@ -617,8 +615,14 @@ function renderSummary(result) {
 
 /* ---------------- flow ---------------- */
 
-async function loadBank() {
-  const response = await fetch("data/questions.json");
+async function loadJson(path, what) {
+  const response = await fetch(path);
+  if (!response.ok) throw new Error(`${what} unavailable (HTTP ${response.status}).`);
+  return response.json();
+}
+
+async function loadBank(file) {
+  const response = await fetch(`data/${file}`);
   if (!response.ok) throw new Error(`Question bank unavailable (HTTP ${response.status}).`);
   const data = await response.json();
 
@@ -633,13 +637,42 @@ async function loadBank() {
   return data;
 }
 
-async function boot() {
-  bank = await loadBank();
+/** Picks the set from ?set=, then the last one used, then the first listed. */
+function initialSet() {
+  const wanted = new URLSearchParams(location.search).get("set") ?? localStorage.getItem(SET_KEY);
+  return sets.find((set) => set.id === wanted) ?? sets[0];
+}
 
-  el("exam-name").textContent = bank.exam;
+async function boot() {
+  sets = await loadJson("data/sets.json", "Practice set list");
+  const picker = el("set-picker");
+  picker.replaceChildren(...sets.map((set) => new Option(set.label, set.id)));
+  await openSet(initialSet());
+}
+
+/** Loads a practice set and shows its start screen; any exam in progress stays saved under its own set. */
+async function openSet(set) {
+  bank = await loadBank(set.file);
+  activeSet = set;
+  live = null;
+  current = null;
+  finalResult = null;
+
+  el("set-picker").value = set.id;
+  el("set-label").textContent = set.label;
+  try {
+    localStorage.setItem(SET_KEY, set.id);
+  } catch {
+    /* storage unavailable — the choice just won't stick */
+  }
+  const url = new URL(location.href);
+  url.searchParams.set("set", set.id);
+  history.replaceState(null, "", url);
+
   el("exam-meta").textContent =
     `${bank.examCode} · ${bank.questions.length} questions · pass mark ${bank.passingScorePercent}%`;
   document.title = `${bank.examCode} Exam Simulator`;
+  el("field-count").value = "";
 
   const draft = loadDraft();
   if (draft !== null && draft.answers.length < draft.questions.length) {
@@ -847,6 +880,22 @@ el("btn-continue").addEventListener(
 );
 
 el("btn-restart").addEventListener("click", guard(backToStart));
+
+el("set-picker").addEventListener(
+  "change",
+  guard(async (event) => {
+    const set = sets.find((entry) => entry.id === event.target.value);
+    if (set === undefined || set === activeSet) return;
+    clearBanner();
+    persist(); // keep the elapsed time of an exam left mid-question
+    try {
+      await openSet(set);
+    } catch (error) {
+      event.target.value = activeSet.id;
+      throw error;
+    }
+  }),
+);
 
 el("btn-download").addEventListener(
   "click",
